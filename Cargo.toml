@@ -1,0 +1,33 @@
+[package]
+name = "podium"
+version = "0.1.0"
+authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+tantivy = "0.9.1"
+walkdir = "2"
+app_dirs = "^1.2.1"
+notify = "4.0.0"
+notify-rust = "3"
+config = "0.9.2"
+sysbar = "0.1.0"
+simple_logger = "1.0.1"
+log = "0.4.6"
+blake2b_simd = "0.4.1"
+
+[target."cfg(windows)".dependencies]
+systray = "0.3.0"
+
+[[bin]]
+name = "podium"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'unwind'
+overflow-checks = false
