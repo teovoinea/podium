@@ -16,11 +16,15 @@ use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::ReloadPolicy;
 use tantivy::directory::*;
+use tantivy::IndexWriter;
 use app_dirs::*;
 use walkdir::{DirEntry, WalkDir};
 use config::*;
 use notify_rust::Notification;
+use notify::{Watcher, RecursiveMode, watcher, DebouncedEvent};
 
+use std::sync::mpsc::channel;
+use std::time::Duration;
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
@@ -28,6 +32,7 @@ use std::thread;
 use std::thread::*;
 use std::io;
 use std::io::prelude::*;
+use std::sync::mpsc::Sender;
 
 mod indexers;
 use indexers::TextIndexer;
@@ -82,9 +87,81 @@ fn build_schema() -> Schema {
     schema_builder.build()
 }
 
+fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schema: Schema) {
+    info!("Starting file watcher thread on: {:?}", directories);
+    let (watcher_tx, watcher_rx) = channel();
+    let mut watcher = watcher(watcher_tx, Duration::from_secs(10)).unwrap();
+
+    // Start watching all directories in the config file
+    for directory in directories {
+        watcher.watch(directory, RecursiveMode::Recursive).unwrap();
+    }
+
+    loop {
+        match watcher_rx.recv() {
+            Ok(event) => {
+                info!("Received watcher event: {:?}", event);
+                match event {
+                    DebouncedEvent::Create(path_buf) => {
+                        if path_buf.is_dir() {
+
+                        }
+                        else {
+                            index_writer.send(process_file(path_buf.as_path(), &schema)).unwrap();
+                        }
+                    },
+                    DebouncedEvent::Write(path_buf) => {},
+                    DebouncedEvent::Remove(path_buf) => {},
+                    DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {},
+                    _ => {}
+                }
+            },
+            Err(e) => error!("watch error: {:?}", e),
+        }
+    }
+}
+
+fn process_file(entry_path: &Path, schema: &Schema) -> Document {
+    let canonical_path = entry_path.canonicalize().unwrap();
+    let location_facet = canonical_path.to_str().unwrap();
+    if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
+        let file_hash;
+        {
+            let mut file = fs::File::open(&entry_path).unwrap();
+            let mut file_buffer = Vec::new();
+            file.read_to_end(&mut file_buffer);
+            file_hash = blake2b(file_buffer.as_slice());
+        }
+        trace!("Hash of file is: {:?}", file_hash);
+        let mut new_doc = Document::default();
+        let indexed_content = TextIndexer::index_file(entry_path);
+        trace!("{:?}", indexed_content);
+        let (title, hash, location, body) = destructure_schema(schema);
+        new_doc.add_text(title, &indexed_content.name);
+        new_doc.add_facet(location, location_facet);
+        new_doc.add_bytes(hash, file_hash.as_bytes().to_vec());
+        new_doc.add_text(body, &indexed_content.body);
+        // index_writer.add_document(new_doc);
+        new_doc
+    }
+    // This is veeeeeeeery wrong, fix it
+    else {
+        Document::default()
+    }
+}
+
+fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
+    (schema.get_field("title").unwrap(), schema.get_field("hash").unwrap(),
+    schema.get_field("location").unwrap(), schema.get_field("body").unwrap())
+}
+
 fn start_tantivy() -> tantivy::Result<()> {
     let index_path = app_dir(AppDataType::UserData, &APP_INFO, "index").unwrap();
     info!("Using index file in: {:?}", index_path);
+
+    let state_path = app_dir(AppDataType::UserData, &APP_INFO, "state").unwrap();
+    let mut initial_processing_file = state_path.clone();
+    initial_processing_file.push("initial_processing");
 
     let config_path = app_dir(AppDataType::UserConfig, &APP_INFO, "config").unwrap();
     let mut config_file = config_path.clone();
@@ -106,12 +183,24 @@ fn start_tantivy() -> tantivy::Result<()> {
     info!("Loading config file from: {:?}", config_file);
     let mut settings = Config::default();
     settings.merge(File::from(config_file)).unwrap();
-
-    debug!("\n{:?} \n\n-----------", settings.try_into::<HashMap<String, Vec<String>>>().unwrap());
+    let settings_dict = settings.try_into::<HashMap<String, Vec<String>>>().unwrap();
+    let directories = settings_dict.get("directories").unwrap();
 
     let schema = build_schema();
 
     let index = Index::open_or_create(MmapDirectory::open(&index_path).unwrap(), schema.clone())?;
+
+    let directories_clone = directories.clone();
+
+    let (index_writer_tx, index_writer_rx) = channel();
+
+    let watcher_index_writer = index_writer_tx.clone();
+    
+    let watcher_schema = schema.clone();
+
+    let watcher_thread = thread::Builder::new()
+                            .name("file_watcher_thread".to_string())
+                            .spawn(|| start_watcher(directories_clone, watcher_index_writer, watcher_schema));
 
     let mut index_writer = index.writer(50_000_000)?;
 
@@ -120,36 +209,49 @@ fn start_tantivy() -> tantivy::Result<()> {
     let location = schema.get_field("location").unwrap();
     let body = schema.get_field("body").unwrap();
 
-
-    let walker = WalkDir::new("test_files").into_iter();
-    for entry in walker.filter_entry(|e| !is_hidden(e)) {
-        let entry = entry.unwrap();
-        if !entry.file_type().is_dir() {
-            let entry_path = entry.path();
-            let canonical_path = entry_path.canonicalize().unwrap();
-            let location_facet = canonical_path.to_str().unwrap();
-            if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
-                let file_hash;
-                {
-                    let mut file = fs::File::open(&entry_path).unwrap();
-                    let mut file_buffer = Vec::new();
-                    file.read_to_end(&mut file_buffer);
-                    file_hash = blake2b(file_buffer.as_slice());
+    if !initial_processing_file.exists() {
+        info!("Initial processing was not previously done, doing now");
+        let walker = WalkDir::new("test_files").into_iter();
+        for entry in walker.filter_entry(|e| !is_hidden(e)) {
+            let entry = entry.unwrap();
+            if !entry.file_type().is_dir() {
+                let entry_path = entry.path();
+                let canonical_path = entry_path.canonicalize().unwrap();
+                let location_facet = canonical_path.to_str().unwrap();
+                if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
+                    let file_hash;
+                    {
+                        let mut file = fs::File::open(&entry_path).unwrap();
+                        let mut file_buffer = Vec::new();
+                        file.read_to_end(&mut file_buffer);
+                        file_hash = blake2b(file_buffer.as_slice());
+                    }
+                    trace!("Hash of file is: {:?}", file_hash);
+                    let mut new_doc = Document::default();
+                    let indexed_content = TextIndexer::index_file(entry_path);
+                    trace!("{:?}", indexed_content);
+                    new_doc.add_text(title, &indexed_content.name);
+                    new_doc.add_facet(location, location_facet);
+                    new_doc.add_bytes(hash, file_hash.as_bytes().to_vec());
+                    new_doc.add_text(body, &indexed_content.body);
+                    index_writer.add_document(new_doc);
                 }
-                trace!("Hash of file is: {:?}", file_hash);
-                let mut new_doc = Document::default();
-                let indexed_content = TextIndexer::index_file(entry_path);
-                trace!("{:?}", indexed_content);
-                new_doc.add_text(title, &indexed_content.name);
-                new_doc.add_facet(location, location_facet);
-                new_doc.add_bytes(hash, file_hash.as_bytes().to_vec());
-                new_doc.add_text(body, &indexed_content.body);
-                index_writer.add_document(new_doc);
             }
         }
+
+        index_writer.commit()?;
+        // After we finished doing the initial processing, add the file so that we know for next time
+        fs::File::create(initial_processing_file).unwrap();
+    }
+    else {
+        println!("Initial processing already done! Starting a reader");
     }
 
-    index_writer.commit()?;
+    // for document_to_write in index_writer_rx.iter() {
+    //     index_writer.add_document(document_to_write);
+    //     // TODO: be smarter about when we commit
+    //     index_writer.commit()?;
+    // }
 
     let reader = index
         .reader_builder()
@@ -161,7 +263,7 @@ fn start_tantivy() -> tantivy::Result<()> {
     let query_parser = QueryParser::for_index(&index, vec![title, body]);
 
     info!("Searching for a file with \"digimon\"...");
-    let query = query_parser.parse_query("digimon")?;
+    let query = query_parser.parse_query("yoyoyo")?;
 
     let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
 
