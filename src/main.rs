@@ -16,7 +16,7 @@ use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::ReloadPolicy;
 use tantivy::directory::*;
-use tantivy::IndexWriter;
+use tantivy::IndexReader;
 use app_dirs::*;
 use walkdir::{DirEntry, WalkDir};
 use config::*;
@@ -32,7 +32,7 @@ use std::thread;
 use std::thread::*;
 use std::io;
 use std::io::prelude::*;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::*;
 
 mod indexers;
 use indexers::TextIndexer;
@@ -44,15 +44,18 @@ const APP_INFO: AppInfo = AppInfo{name: "Podium", author: "Teodor Voinea"};
 
 fn main() {
     simple_logger::init().unwrap();
+    let (query_tx, query_rx) = channel();
+    let tantivy_query_tx = query_tx.clone();
     let tantivy_thread = thread::Builder::new().name("tantivy".to_string()).spawn(move || {
-        start_tantivy()
+        start_tantivy((tantivy_query_tx, query_rx))
     });
 
     let mut bar = sysbar::Sysbar::new("P");
     bar.add_item(
-        "Say 'bar'",
+        "Search",
         Box::new(move || {
-            println!("bar");
+            println!("Searching!");
+            query_tx.send("digimon".to_string()).unwrap();
         }),
     );
 
@@ -104,16 +107,24 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schem
                 match event {
                     DebouncedEvent::Create(path_buf) => {
                         if path_buf.is_dir() {
-
+                            // Traverse through all the files in the directory 
                         }
                         else {
                             index_writer.send(process_file(path_buf.as_path(), &schema)).unwrap();
                         }
                     },
-                    DebouncedEvent::Write(path_buf) => {},
-                    DebouncedEvent::Remove(path_buf) => {},
-                    DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {},
-                    _ => {}
+                    DebouncedEvent::Write(path_buf) => {
+                        // Remove the old document, reprocess and add the new content
+                    },
+                    DebouncedEvent::Remove(path_buf) => {
+                        // Remove the old document
+                    },
+                    DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {
+                        // Figure out if you can just update the facet without reprocessing the whole document?
+                    },
+                    _ => {
+                        // Ignore the rest for now? Not sure...
+                    }
                 }
             },
             Err(e) => error!("watch error: {:?}", e),
@@ -141,10 +152,11 @@ fn process_file(entry_path: &Path, schema: &Schema) -> Document {
         new_doc.add_facet(location, location_facet);
         new_doc.add_bytes(hash, file_hash.as_bytes().to_vec());
         new_doc.add_text(body, &indexed_content.body);
-        // index_writer.add_document(new_doc);
         new_doc
     }
     // This is veeeeeeeery wrong, fix it
+    // Eventually when there's many indexers and I generalize this function,
+    // if there's no match, we should just return none
     else {
         Document::default()
     }
@@ -155,7 +167,7 @@ fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
     schema.get_field("location").unwrap(), schema.get_field("body").unwrap())
 }
 
-fn start_tantivy() -> tantivy::Result<()> {
+fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::Result<()> {
     let index_path = app_dir(AppDataType::UserData, &APP_INFO, "index").unwrap();
     info!("Using index file in: {:?}", index_path);
 
@@ -247,30 +259,45 @@ fn start_tantivy() -> tantivy::Result<()> {
         println!("Initial processing already done! Starting a reader");
     }
 
-    // for document_to_write in index_writer_rx.iter() {
-    //     index_writer.add_document(document_to_write);
-    //     // TODO: be smarter about when we commit
-    //     index_writer.commit()?;
-    // }
-
     let reader = index
         .reader_builder()
         .reload_policy(ReloadPolicy::OnCommit)
         .try_into()?;
 
-    let searcher = reader.searcher();
+    let reader_schema = schema.clone();
 
-    let query_parser = QueryParser::for_index(&index, vec![title, body]);
+    let (reader_tx, reader_rx) = query_channel;
 
-    info!("Searching for a file with \"digimon\"...");
-    let query = query_parser.parse_query("yoyoyo")?;
+    let reader_thread = thread::Builder::new()
+                            .name("tantivy_reader".to_string())
+                            .spawn(move || start_reader(index, reader, reader_rx, &reader_schema));
 
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
-
-    for (_score, doc_address) in top_docs {
-        let retrieved_doc = searcher.doc(doc_address)?;
-        info!("{}", schema.to_json(&retrieved_doc));
+    for document_to_write in index_writer_rx.iter() {
+        index_writer.add_document(document_to_write);
+        // TODO: be smarter about when we commit
+        index_writer.commit()?;
     }
 
     Ok(())
+}
+
+fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>, schema: &Schema) {
+    info!("Starting query executor thread");
+    for query_string in queries.iter() {
+        // Searchers are cheap and should be regenerated for each query
+        let searcher = reader.searcher();
+
+        let (title, _, location, body) = destructure_schema(schema);
+
+        let query_parser = QueryParser::for_index(&index, vec![title, body, location]);
+        info!("Searching for a file with {:?}...", query_string);
+        let query = query_parser.parse_query(&query_string).unwrap();
+
+        let top_docs = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
+
+        for (_score, doc_address) in top_docs {
+            let retrieved_doc = searcher.doc(doc_address).unwrap();
+            info!("{}", schema.to_json(&retrieved_doc));
+        }
+    }
 }
