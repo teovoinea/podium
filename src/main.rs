@@ -118,20 +118,28 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction>, s
                             // Traverse through all the files in the directory 
                         }
                         else {
-                            index_writer.send(
-                                WriterAction::Add(process_file(path_buf.as_path(), &schema, &index_reader))
-                            ).unwrap();
+                            // We might not need to add anything if the file already exists
+                            if let Some(doc_to_add) = process_file(path_buf.as_path(), &schema, &index_reader) {
+                                index_writer.send(
+                                    WriterAction::Add(doc_to_add)
+                                ).unwrap();
+                            }
                         }
                     },
                     DebouncedEvent::Write(path_buf) => {
                         // Remove the old document, reprocess and add the new content
                     },
                     DebouncedEvent::NoticeRemove(path_buf) => {
-                        // Remove the old document
-                        let canonical_path = path_buf.as_path().canonicalize().unwrap();
-                        let location_facet = Facet::from_text(canonical_path.to_str().unwrap());
-                        let (_title, _hash_field, location, _body) = destructure_schema(&schema);
-                        delete_doc(&index_reader, &index_writer, location, &location_facet);
+                        if path_buf.is_dir() {
+                            // Traverse through all the files in the directory 
+                        }
+                        else {
+                            // Remove the old document
+                            let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
+                            let (_title, _hash_field, location, _body) = destructure_schema(&schema);
+                            delete_doc(&index_reader, &index_writer, location, &location_facet);
+                        }
+
                     },
                     DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {
                         // Figure out if you can just update the facet without reprocessing the whole document?
@@ -205,7 +213,7 @@ fn get_file_hash(entry_path: &Path) -> blake2b_simd::Hash {
     file_hash
 }
 
-fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Document {
+fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Option<Document> {
     let searcher = index_reader.searcher();
     let canonical_path = entry_path.canonicalize().unwrap();
     let location_facet = canonical_path.to_str().unwrap();
@@ -222,27 +230,22 @@ fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) 
             // TODO: Search for the file given the DocId
             // If this location of the file isn't already stored in the document, add it
             // Otherwise, we can ignore
+            return None
         }
         else {
             info!("This is a new file, we need to process it");
+            let mut new_doc = Document::default();
+            let indexed_content = TextIndexer::index_file(entry_path);
+            trace!("{:?}", indexed_content);
+            
+            new_doc.add_text(title, &indexed_content.name);
+            new_doc.add_facet(location, location_facet);
+            new_doc.add_text(hash, file_hash.to_hex().as_str());
+            new_doc.add_text(body, &indexed_content.body);
+            return Some(new_doc)
         }
-
-        let mut new_doc = Document::default();
-        let indexed_content = TextIndexer::index_file(entry_path);
-        trace!("{:?}", indexed_content);
-        
-        new_doc.add_text(title, &indexed_content.name);
-        new_doc.add_facet(location, location_facet);
-        new_doc.add_text(hash, file_hash.to_hex().as_str());
-        new_doc.add_text(body, &indexed_content.body);
-        new_doc
     }
-    // This is veeeeeeeery wrong, fix it
-    // Eventually when there's many indexers and I generalize this function,
-    // if there's no match, we should just return none
-    else {
-        Document::default()
-    }
+    None
 }
 
 fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
@@ -316,15 +319,19 @@ fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::
 
     if !initial_processing_file.exists() {
         info!("Initial processing was not previously done, doing now");
-        let walker = WalkDir::new("test_files").into_iter();
-        for entry in walker.filter_entry(|e| !is_hidden(e)) {
-            let entry = entry.unwrap();
-            if !entry.file_type().is_dir() {
-                let entry_path = entry.path();
-                index_writer.add_document(process_file(entry_path, &schema, &reader));
+        for directory in directories {
+            let walker = WalkDir::new(directory).into_iter();
+            for entry in walker.filter_entry(|e| !is_hidden(e)) {
+                let entry = entry.unwrap();
+                if !entry.file_type().is_dir() {
+                    let entry_path = entry.path();
+                    // We might not need to add anything if the file already exists
+                    if let Some(doc_to_add) = process_file(entry_path, &schema, &reader) {
+                        index_writer.add_document(doc_to_add);
+                    }
+                }
             }
         }
-
         index_writer.commit()?;
         // After we finished doing the initial processing, add the file so that we know for next time
         fs::File::create(initial_processing_file).unwrap();
