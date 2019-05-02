@@ -10,13 +10,14 @@ extern crate sysbar;
 
 use blake2b_simd::blake2b;
 use sysbar::Sysbar;
-use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
-use tantivy::Index;
 use tantivy::ReloadPolicy;
 use tantivy::directory::*;
 use tantivy::IndexReader;
+use tantivy::{Index, Result, Term};
+use tantivy::collector::{Count, TopDocs};
+use tantivy::query::TermQuery;
 use app_dirs::*;
 use walkdir::{DirEntry, WalkDir};
 use config::*;
@@ -81,7 +82,7 @@ fn build_schema() -> Schema {
 
     schema_builder.add_text_field("title", TEXT | STORED);
 
-    schema_builder.add_bytes_field("hash");
+    schema_builder.add_text_field("hash", STRING | STORED);
 
     schema_builder.add_facet_field("location");
 
@@ -90,7 +91,7 @@ fn build_schema() -> Schema {
     schema_builder.build()
 }
 
-fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schema: Schema) {
+fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schema: Schema, index_reader: IndexReader) {
     info!("Starting file watcher thread on: {:?}", directories);
     let (watcher_tx, watcher_rx) = channel();
     let mut watcher = watcher(watcher_tx, Duration::from_secs(10)).unwrap();
@@ -110,7 +111,7 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schem
                             // Traverse through all the files in the directory 
                         }
                         else {
-                            index_writer.send(process_file(path_buf.as_path(), &schema)).unwrap();
+                            index_writer.send(process_file(path_buf.as_path(), &schema, &index_reader)).unwrap();
                         }
                     },
                     DebouncedEvent::Write(path_buf) => {
@@ -132,7 +133,8 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schem
     }
 }
 
-fn process_file(entry_path: &Path, schema: &Schema) -> Document {
+fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Document {
+    let searcher = index_reader.searcher();
     let canonical_path = entry_path.canonicalize().unwrap();
     let location_facet = canonical_path.to_str().unwrap();
     if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
@@ -144,13 +146,34 @@ fn process_file(entry_path: &Path, schema: &Schema) -> Document {
             file_hash = blake2b(file_buffer.as_slice());
         }
         trace!("Hash of file is: {:?}", file_hash);
+
+        let (title, hash, location, body) = destructure_schema(schema);
+
+        // Check if the file has already been indexed
+
+        let query = TermQuery::new(
+            Term::from_field_text(hash, file_hash.to_hex().as_str()),
+            IndexRecordOption::Basic,
+        );
+
+        let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(1), Count)).unwrap();
+        if count == 1 {
+            info!("We've seen this file before! {:?}", canonical_path);
+            // TODO: Search for the file given the DocId
+            // If this location of the file isn't already stored in the document, add it
+            // Otherwise, we can ignore
+        }
+        else {
+            info!("This is a new file, we need to process it");
+        }
+
         let mut new_doc = Document::default();
         let indexed_content = TextIndexer::index_file(entry_path);
         trace!("{:?}", indexed_content);
-        let (title, hash, location, body) = destructure_schema(schema);
+        
         new_doc.add_text(title, &indexed_content.name);
         new_doc.add_facet(location, location_facet);
-        new_doc.add_bytes(hash, file_hash.as_bytes().to_vec());
+        new_doc.add_text(hash, file_hash.to_hex().as_str());
         new_doc.add_text(body, &indexed_content.body);
         new_doc
     }
@@ -202,6 +225,11 @@ fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::
 
     let index = Index::open_or_create(MmapDirectory::open(&index_path).unwrap(), schema.clone())?;
 
+    let reader = index
+        .reader_builder()
+        .reload_policy(ReloadPolicy::OnCommit)
+        .try_into()?;
+
     let directories_clone = directories.clone();
 
     let (index_writer_tx, index_writer_rx) = channel();
@@ -210,9 +238,14 @@ fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::
     
     let watcher_schema = schema.clone();
 
+    let watcher_reader = index
+        .reader_builder()
+        .reload_policy(ReloadPolicy::OnCommit)
+        .try_into()?;
+
     let watcher_thread = thread::Builder::new()
                             .name("file_watcher_thread".to_string())
-                            .spawn(|| start_watcher(directories_clone, watcher_index_writer, watcher_schema));
+                            .spawn(|| start_watcher(directories_clone, watcher_index_writer, watcher_schema, watcher_reader));
 
     let mut index_writer = index.writer(50_000_000)?;
 
@@ -228,26 +261,7 @@ fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::
             let entry = entry.unwrap();
             if !entry.file_type().is_dir() {
                 let entry_path = entry.path();
-                let canonical_path = entry_path.canonicalize().unwrap();
-                let location_facet = canonical_path.to_str().unwrap();
-                if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
-                    let file_hash;
-                    {
-                        let mut file = fs::File::open(&entry_path).unwrap();
-                        let mut file_buffer = Vec::new();
-                        file.read_to_end(&mut file_buffer);
-                        file_hash = blake2b(file_buffer.as_slice());
-                    }
-                    trace!("Hash of file is: {:?}", file_hash);
-                    let mut new_doc = Document::default();
-                    let indexed_content = TextIndexer::index_file(entry_path);
-                    trace!("{:?}", indexed_content);
-                    new_doc.add_text(title, &indexed_content.name);
-                    new_doc.add_facet(location, location_facet);
-                    new_doc.add_bytes(hash, file_hash.as_bytes().to_vec());
-                    new_doc.add_text(body, &indexed_content.body);
-                    index_writer.add_document(new_doc);
-                }
+                index_writer.add_document(process_file(entry_path, &schema, &reader));
             }
         }
 
@@ -257,12 +271,7 @@ fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::
     }
     else {
         println!("Initial processing already done! Starting a reader");
-    }
-
-    let reader = index
-        .reader_builder()
-        .reload_policy(ReloadPolicy::OnCommit)
-        .try_into()?;
+    }    
 
     let reader_schema = schema.clone();
 
