@@ -15,8 +15,10 @@ use tantivy::schema::*;
 use tantivy::ReloadPolicy;
 use tantivy::directory::*;
 use tantivy::IndexReader;
+use tantivy::IndexWriter;
 use tantivy::{Index, Result, Term};
 use tantivy::collector::{Count, TopDocs};
+use tantivy::DocAddress;
 use tantivy::query::TermQuery;
 use app_dirs::*;
 use walkdir::{DirEntry, WalkDir};
@@ -91,7 +93,12 @@ fn build_schema() -> Schema {
     schema_builder.build()
 }
 
-fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schema: Schema, index_reader: IndexReader) {
+enum WriterAction {
+    Add(Document),
+    Delete(Term)
+}
+
+fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction>, schema: Schema, index_reader: IndexReader) {
     info!("Starting file watcher thread on: {:?}", directories);
     let (watcher_tx, watcher_rx) = channel();
     let mut watcher = watcher(watcher_tx, Duration::from_secs(10)).unwrap();
@@ -111,14 +118,20 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schem
                             // Traverse through all the files in the directory 
                         }
                         else {
-                            index_writer.send(process_file(path_buf.as_path(), &schema, &index_reader)).unwrap();
+                            index_writer.send(
+                                WriterAction::Add(process_file(path_buf.as_path(), &schema, &index_reader))
+                            ).unwrap();
                         }
                     },
                     DebouncedEvent::Write(path_buf) => {
                         // Remove the old document, reprocess and add the new content
                     },
-                    DebouncedEvent::Remove(path_buf) => {
+                    DebouncedEvent::NoticeRemove(path_buf) => {
                         // Remove the old document
+                        let canonical_path = path_buf.as_path().canonicalize().unwrap();
+                        let location_facet = Facet::from_text(canonical_path.to_str().unwrap());
+                        let (_title, _hash_field, location, _body) = destructure_schema(&schema);
+                        delete_doc(&index_reader, &index_writer, location, &location_facet);
                     },
                     DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {
                         // Figure out if you can just update the facet without reprocessing the whole document?
@@ -133,31 +146,78 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<Document>, schem
     }
 }
 
+fn get_doc_by_hash(index_reader: &IndexReader, hash_field: Field, hash: &str) -> Option<DocAddress> {
+    let searcher = index_reader.searcher();
+    let query = TermQuery::new(
+            Term::from_field_text(hash_field, hash),
+            IndexRecordOption::Basic,
+    );
+    let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(1), Count)).unwrap();
+    if count == 1 {
+        let (_score, address) = top_docs[0];
+        Some(address)
+    }
+    else {
+        assert!(count == 0, "More than 1 document with the same hash!!!");
+        None
+    }
+}
+
+fn get_doc_by_location(index_reader: &IndexReader, location_field: Field, location_facet: &Facet) -> Option<DocAddress> {
+    let searcher = index_reader.searcher();
+    let query = TermQuery::new(
+        Term::from_facet(location_field, location_facet),
+            IndexRecordOption::Basic,
+    );
+    let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(1), Count)).unwrap();
+    if count == 1 {
+        let (_score, address) = top_docs[0];
+        Some(address)
+    }
+    else {
+        assert!(count == 0, "More than 1 document with the same location!!!");
+        None
+    }
+}
+
+fn delete_doc(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, location_field: Field, location_facet: &Facet) -> Option<Document> {
+    if let Some(old_address) = get_doc_by_location(index_reader, location_field, location_facet) {
+        let searcher = index_reader.searcher();
+        let location_term = Term::from_facet(location_field, location_facet);
+        let old_document = Some(searcher.doc(old_address).unwrap());
+        index_writer.send(WriterAction::Delete(location_term)).unwrap();
+        old_document
+    }
+    else {
+        None
+    }
+}
+
+fn get_file_hash(entry_path: &Path) -> blake2b_simd::Hash {
+    let file_hash;
+    {
+        let mut file = fs::File::open(&entry_path).unwrap();
+        let mut file_buffer = Vec::new();
+        file.read_to_end(&mut file_buffer);
+        file_hash = blake2b(file_buffer.as_slice());
+    }
+    trace!("Hash of file is: {:?}", file_hash);
+    file_hash
+}
+
 fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Document {
     let searcher = index_reader.searcher();
     let canonical_path = entry_path.canonicalize().unwrap();
     let location_facet = canonical_path.to_str().unwrap();
     if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
-        let file_hash;
-        {
-            let mut file = fs::File::open(&entry_path).unwrap();
-            let mut file_buffer = Vec::new();
-            file.read_to_end(&mut file_buffer);
-            file_hash = blake2b(file_buffer.as_slice());
-        }
+        let file_hash = get_file_hash(entry_path);
         trace!("Hash of file is: {:?}", file_hash);
 
         let (title, hash, location, body) = destructure_schema(schema);
 
         // Check if the file has already been indexed
 
-        let query = TermQuery::new(
-            Term::from_field_text(hash, file_hash.to_hex().as_str()),
-            IndexRecordOption::Basic,
-        );
-
-        let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(1), Count)).unwrap();
-        if count == 1 {
+        if let Some(document) = get_doc_by_hash(index_reader, hash, file_hash.to_hex().as_str()) {
             info!("We've seen this file before! {:?}", canonical_path);
             // TODO: Search for the file given the DocId
             // If this location of the file isn't already stored in the document, add it
@@ -281,10 +341,18 @@ fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::
                             .name("tantivy_reader".to_string())
                             .spawn(move || start_reader(index, reader, reader_rx, &reader_schema));
 
-    for document_to_write in index_writer_rx.iter() {
-        index_writer.add_document(document_to_write);
-        // TODO: be smarter about when we commit
-        index_writer.commit()?;
+    for writer_action in index_writer_rx.iter() {
+        match writer_action {
+            WriterAction::Add(document_to_write) => {
+                index_writer.add_document(document_to_write);
+                // TODO: be smarter about when we commit
+                index_writer.commit()?;
+            },
+            WriterAction::Delete(hash_term) => {
+                index_writer.delete_term(hash_term);
+                index_writer.commit()?;
+            }
+        } 
     }
 
     Ok(())
