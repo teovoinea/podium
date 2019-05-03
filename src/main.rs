@@ -20,6 +20,7 @@ use tantivy::{Index, Result, Term};
 use tantivy::collector::{Count, TopDocs};
 use tantivy::DocAddress;
 use tantivy::query::TermQuery;
+use tantivy::schema::Value;
 use app_dirs::*;
 use walkdir::{DirEntry, WalkDir};
 use config::*;
@@ -88,7 +89,7 @@ fn build_schema() -> Schema {
 
     schema_builder.add_facet_field("location");
 
-    schema_builder.add_text_field("body", TEXT);
+    schema_builder.add_text_field("body", TEXT | STORED);
 
     schema_builder.build()
 }
@@ -118,8 +119,22 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction>, s
                             // Traverse through all the files in the directory 
                         }
                         else {
+                            let file_hash = get_file_hash(path_buf.as_path());
+                            // Check if this file has been processed before at a different location
+                            if let Some(doc_to_update) = update_existing_file(path_buf.as_path(), &schema, &index_reader, &file_hash) {
+                                // If it has, add this current location to the document
+                                let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
+                                let (_title, hash_field, location, _body) = destructure_schema(&schema);
+                                // Delete the old document
+                                info!("Deleting the old document");
+                                delete_doc_by_hash(&index_reader, &index_writer, hash_field, file_hash.to_hex().as_str());
+                                info!("Adding the new document");
+                                index_writer.send(
+                                    WriterAction::Add(doc_to_update)
+                                ).unwrap();
+                            }
                             // We might not need to add anything if the file already exists
-                            if let Some(doc_to_add) = process_file(path_buf.as_path(), &schema, &index_reader) {
+                            else if let Some(doc_to_add) = process_file(path_buf.as_path(), &schema, &index_reader) {
                                 index_writer.send(
                                     WriterAction::Add(doc_to_add)
                                 ).unwrap();
@@ -128,6 +143,90 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction>, s
                     },
                     DebouncedEvent::Write(path_buf) => {
                         // Remove the old document, reprocess and add the new content
+                        if path_buf.is_dir() {
+                            // Traverse through all the files in the directory 
+                        }
+                        else {
+                            // Remove the old document
+                            let location_facet = Facet::from_text(path_buf.as_path().canonicalize().unwrap().to_str().unwrap());
+                            let (title, hash_field, location, body) = destructure_schema(&schema);
+                            if let Some(old_doc) = delete_doc(&index_reader, &index_writer, location, &location_facet) {
+                                info!("Deleted old document succesfully");
+                                let mut locations = old_doc.get_all(location);
+                                info!("Current locations for the doc are: {:?}", locations);
+                                if locations.len() > 1 {
+                                    info!("Removing old document but there are multiple locations");
+                                    info!("Removing {0:?} from {1:?}", path_buf, locations);
+                                    // there were multiple copies of this file elsewhere
+                                    // only remove this location, keep the rest
+                                    let mut old_location_index = None;
+                                    for (index, &location_value) in locations.iter().enumerate() {
+                                        match location_value {
+                                            Value::Facet(location_value_facet) => {
+                                                info!("Checking if {0:?} is equal to {1:?}", location_value_facet, &location_facet);
+                                                if location_value_facet == &location_facet {
+                                                    old_location_index = Some(index)
+                                                }
+                                            }
+                                            _ => { /* ignore */ }
+                                        }
+                                    }
+                                    info!("Index to remove: {:?}", old_location_index);
+                                    match old_location_index {
+                                        Some(index) => { locations.remove(index); },
+                                        None => { panic!("Tried to remove location {0:?} from document {1:?} but the location was not found", path_buf, old_doc); }
+                                    }
+                                    
+                                    let mut new_doc = Document::default();
+                                    info!("Setting title for new doc");
+
+                                    for title_value in old_doc.get_all(title) {
+                                        new_doc.add_text(title, title_value.text().unwrap());
+                                    }
+
+                                    info!("Setting locations for new doc");
+                                    for location_value in locations {
+                                        new_doc.add(FieldValue::new(location, location_value.clone()));
+                                    }
+
+                                    info!("Setting hash for new doc");
+
+                                    // There should only be 1 hash value
+                                    new_doc.add_text(hash_field, old_doc.get_first(hash_field).unwrap().text().unwrap());
+
+                                    info!("Setting body for new doc");
+                                    for body_value in old_doc.get_all(body) {
+                                        new_doc.add_text(body, body_value.text().unwrap());
+                                    }
+
+                                    info!("The new doc after modifications {:?}", new_doc);
+                                    index_writer.send(
+                                        WriterAction::Add(new_doc)
+                                    ).unwrap();
+                                }
+                            }
+
+                            let file_hash = get_file_hash(path_buf.as_path());
+                            // Check if this file has been processed before at a different location
+                            if let Some(doc_to_update) = update_existing_file(path_buf.as_path(), &schema, &index_reader, &file_hash) {
+                                // If it has, add this current location to the document
+                                let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
+                                let (_title, hash_field, location, _body) = destructure_schema(&schema);
+                                // Delete the old document
+                                info!("Deleting the old document");
+                                delete_doc_by_hash(&index_reader, &index_writer, hash_field, file_hash.to_hex().as_str());
+                                info!("Adding the new document: {:?}", doc_to_update);
+                                index_writer.send(
+                                    WriterAction::Add(doc_to_update)
+                                ).unwrap();
+                            }
+                            // We might not need to add anything if the file already exists
+                            else if let Some(doc_to_add) = process_file(path_buf.as_path(), &schema, &index_reader) {
+                                index_writer.send(
+                                    WriterAction::Add(doc_to_add)
+                                ).unwrap();
+                            }
+                        }
                     },
                     DebouncedEvent::NoticeRemove(path_buf) => {
                         if path_buf.is_dir() {
@@ -139,7 +238,6 @@ fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction>, s
                             let (_title, _hash_field, location, _body) = destructure_schema(&schema);
                             delete_doc(&index_reader, &index_writer, location, &location_facet);
                         }
-
                     },
                     DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {
                         // Figure out if you can just update the facet without reprocessing the whole document?
@@ -166,7 +264,13 @@ fn get_doc_by_hash(index_reader: &IndexReader, hash_field: Field, hash: &str) ->
         Some(address)
     }
     else {
-        assert!(count == 0, "More than 1 document with the same hash!!!");
+        if count > 1 {
+            for (_score, doc_address) in top_docs {
+                let retrieved_doc = searcher.doc(doc_address).unwrap();
+                info!("{:?}", retrieved_doc);
+            }
+            panic!("More than 1 document with the same hash!!!");
+        }
         None
     }
 }
@@ -178,12 +282,18 @@ fn get_doc_by_location(index_reader: &IndexReader, location_field: Field, locati
             IndexRecordOption::Basic,
     );
     let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(1), Count)).unwrap();
-    if count == 1 {
+    if top_docs.len() == 1 {
         let (_score, address) = top_docs[0];
         Some(address)
     }
     else {
-        assert!(count == 0, "More than 1 document with the same location!!!");
+        if top_docs.len() > 1 {
+            for (_score, doc_address) in top_docs {
+                let retrieved_doc = searcher.doc(doc_address).unwrap();
+                info!("{:?}", retrieved_doc);
+            }
+            panic!("More than 1 document with the same location!!!");
+        }
         None
     }
 }
@@ -194,6 +304,21 @@ fn delete_doc(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, l
         let location_term = Term::from_facet(location_field, location_facet);
         let old_document = Some(searcher.doc(old_address).unwrap());
         index_writer.send(WriterAction::Delete(location_term)).unwrap();
+        info!("Deleting document by location: {:?}", old_document);
+        old_document
+    }
+    else {
+        None
+    }
+}
+
+fn delete_doc_by_hash(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, hash_field: Field, hash: &str) -> Option<Document> {
+    if let Some(old_address) = get_doc_by_hash(index_reader, hash_field, hash) {
+        let searcher = index_reader.searcher();
+        let location_term = Term::from_field_text(hash_field, hash);
+        let old_document = Some(searcher.doc(old_address).unwrap());
+        index_writer.send(WriterAction::Delete(location_term)).unwrap();
+        info!("Deleting document by hash: {:?}", old_document);
         old_document
     }
     else {
@@ -213,6 +338,27 @@ fn get_file_hash(entry_path: &Path) -> blake2b_simd::Hash {
     file_hash
 }
 
+fn update_existing_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader, hash: &blake2b_simd::Hash) -> Option<Document> {
+    let searcher = index_reader.searcher();
+    let canonical_path = entry_path.canonicalize().unwrap();
+    let location_facet = canonical_path.to_str().unwrap();
+    let (title, hash_field, location, body) = destructure_schema(schema);
+    if let Some(doc_address) = get_doc_by_hash(index_reader, hash_field, hash.to_hex().as_str()) {
+        info!("We've seen this file before! {:?}", canonical_path);
+        let mut retrieved_doc = searcher.doc(doc_address).unwrap();
+        info!("Is this current file's location already in the document? {:?}", !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))));
+        if !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))) {
+            // If this location of the file isn't already stored in the document, add it
+            retrieved_doc.add_facet(location, location_facet);
+            info!("The new document with the added location is: {:?}", retrieved_doc);
+            return Some(retrieved_doc)
+        }
+        // Otherwise, we can ignore
+        return None
+    }
+    None
+}
+
 fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Option<Document> {
     let searcher = index_reader.searcher();
     let canonical_path = entry_path.canonicalize().unwrap();
@@ -225,10 +371,16 @@ fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) 
 
         // Check if the file has already been indexed
 
-        if let Some(document) = get_doc_by_hash(index_reader, hash, file_hash.to_hex().as_str()) {
+        if let Some(doc_address) = get_doc_by_hash(index_reader, hash, file_hash.to_hex().as_str()) {
             info!("We've seen this file before! {:?}", canonical_path);
-            // TODO: Search for the file given the DocId
-            // If this location of the file isn't already stored in the document, add it
+            let mut retrieved_doc = searcher.doc(doc_address).unwrap();
+            info!("Is this current file's location already in the document? {:?}", !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))));
+            if !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))) {
+                // If this location of the file isn't already stored in the document, add it
+                retrieved_doc.add_facet(location, location_facet);
+                info!("The new document with the added location is: {:?}", retrieved_doc);
+                return Some(retrieved_doc)
+            }
             // Otherwise, we can ignore
             return None
         }
@@ -325,8 +477,20 @@ fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::
                 let entry = entry.unwrap();
                 if !entry.file_type().is_dir() {
                     let entry_path = entry.path();
+                    let file_hash = get_file_hash(entry_path);
+                    // Check if this file has been processed before at a different location
+                    if let Some(doc_to_update) = update_existing_file(entry_path, &schema, &reader, &file_hash) {
+                        // If it has, add this current location to the document
+                        let (_title, hash_field, _location, _body) = destructure_schema(&schema);
+                        // Delete the old document
+                        let hash_term = Term::from_field_text(hash_field, file_hash.to_hex().as_str());
+                        info!("Deleting the old document");
+                        index_writer.delete_term(hash_term);
+                        info!("Adding the new document");
+                        index_writer.add_document(doc_to_update);
+                    }
                     // We might not need to add anything if the file already exists
-                    if let Some(doc_to_add) = process_file(entry_path, &schema, &reader) {
+                    else if let Some(doc_to_add) = process_file(entry_path, &schema, &reader) {
                         index_writer.add_document(doc_to_add);
                     }
                 }
