@@ -59,7 +59,7 @@ pub fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction
                             // Remove the old document
                             let location_facet = Facet::from_text(path_buf.as_path().canonicalize().unwrap().to_str().unwrap());
                             let (title, hash_field, location, body) = destructure_schema(&schema);
-                            if let Some(old_doc) = delete_doc(&index_reader, &index_writer, location, &location_facet) {
+                            if let Some(old_doc) = delete_doc_by_location(&index_reader, &index_writer, location, &location_facet) {
                                 info!("Deleted old document succesfully");
                                 let mut locations = old_doc.get_all(location);
                                 info!("Current locations for the doc are: {:?}", locations);
@@ -145,7 +145,7 @@ pub fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction
                             // Remove the old document
                             let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
                             let (_title, _hash_field, location, _body) = destructure_schema(&schema);
-                            delete_doc(&index_reader, &index_writer, location, &location_facet);
+                            delete_doc_by_location(&index_reader, &index_writer, location, &location_facet);
                         }
                     },
                     DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {

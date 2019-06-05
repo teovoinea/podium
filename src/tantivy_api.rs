@@ -24,6 +24,7 @@ pub fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
     schema.get_field("location").unwrap(), schema.get_field("body").unwrap())
 }
 
+// Gets the `DocAddress` of a file based on the hash
 pub fn get_doc_by_hash(index_reader: &IndexReader, hash_field: Field, hash: &str) -> Option<DocAddress> {
     let searcher = index_reader.searcher();
     let query = TermQuery::new(
@@ -47,6 +48,7 @@ pub fn get_doc_by_hash(index_reader: &IndexReader, hash_field: Field, hash: &str
     }
 }
 
+// Gets the `DocAddress` of a file based on the file location
 pub fn get_doc_by_location(index_reader: &IndexReader, location_field: Field, location_facet: &Facet) -> Option<DocAddress> {
     let searcher = index_reader.searcher();
     let query = TermQuery::new(
@@ -70,7 +72,8 @@ pub fn get_doc_by_location(index_reader: &IndexReader, location_field: Field, lo
     }
 }
 
-pub fn delete_doc(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, location_field: Field, location_facet: &Facet) -> Option<Document> {
+// Find `DocAddress` by file location, delete the document and return its contents
+pub fn delete_doc_by_location(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, location_field: Field, location_facet: &Facet) -> Option<Document> {
     if let Some(old_address) = get_doc_by_location(index_reader, location_field, location_facet) {
         let searcher = index_reader.searcher();
         let location_term = Term::from_facet(location_field, location_facet);
@@ -84,6 +87,7 @@ pub fn delete_doc(index_reader: &IndexReader, index_writer: &Sender<WriterAction
     }
 }
 
+// Find `DocAddress` by file hash, delete the document and return its contents
 pub fn delete_doc_by_hash(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, hash_field: Field, hash: &str) -> Option<Document> {
     if let Some(old_address) = get_doc_by_hash(index_reader, hash_field, hash) {
         let searcher = index_reader.searcher();
@@ -98,6 +102,7 @@ pub fn delete_doc_by_hash(index_reader: &IndexReader, index_writer: &Sender<Writ
     }
 }
 
+// Calculates hash of file from Path
 pub fn get_file_hash(entry_path: &Path) -> blake2b_simd::Hash {
     let file_hash;
     {
@@ -111,6 +116,12 @@ pub fn get_file_hash(entry_path: &Path) -> blake2b_simd::Hash {
     file_hash
 }
 
+// If a document with the same file hash already exists, we can avoid processing it again
+// In that case, if this file is found in a new location, add that location to the facet list
+// eg: if we have 2 files A and B with the same content
+// A is indexed and exists at /path/to/A
+// We will see B has the same hash as A
+// Instead of reprocessing B, we add /path/to/B to the list of locations
 pub fn update_existing_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader, hash: &blake2b_simd::Hash) -> Option<Document> {
     let searcher = index_reader.searcher();
     let canonical_path = entry_path.canonicalize().unwrap();
@@ -132,47 +143,36 @@ pub fn update_existing_file(entry_path: &Path, schema: &Schema, index_reader: &I
     None
 }
 
+// Processes a file by running all available indexers on it
 pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Option<Document> {
-    let searcher = index_reader.searcher();
     let canonical_path = entry_path.canonicalize().unwrap();
     let location_facet = canonical_path.to_str().unwrap();
+    let file_hash = get_file_hash(entry_path);
+    trace!("Hash of file is: {:?}", file_hash);
+
+    // Check if the file has already been indexed
+    if let Some(doc) = update_existing_file(entry_path, &schema, &index_reader, &file_hash) {
+        return Some(doc)
+    }
+
+    // We're indexing this file for the first time
     if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
-        let file_hash = get_file_hash(entry_path);
-        trace!("Hash of file is: {:?}", file_hash);
-
         let (title, hash, location, body) = destructure_schema(schema);
-
-        // Check if the file has already been indexed
-
-        if let Some(doc_address) = get_doc_by_hash(index_reader, hash, file_hash.to_hex().as_str()) {
-            info!("We've seen this file before! {:?}", canonical_path);
-            let mut retrieved_doc = searcher.doc(doc_address).unwrap();
-            info!("Is this current file's location already in the document? {:?}", !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))));
-            if !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))) {
-                // If this location of the file isn't already stored in the document, add it
-                retrieved_doc.add_facet(location, location_facet);
-                info!("The new document with the added location is: {:?}", retrieved_doc);
-                return Some(retrieved_doc)
-            }
-            // Otherwise, we can ignore
-            return None
-        }
-        else {
-            info!("This is a new file, we need to process it");
-            let mut new_doc = Document::default();
-            let indexed_content = TextIndexer::index_file(entry_path);
-            trace!("{:?}", indexed_content);
-            
-            new_doc.add_text(title, &indexed_content.name);
-            new_doc.add_facet(location, location_facet);
-            new_doc.add_text(hash, file_hash.to_hex().as_str());
-            new_doc.add_text(body, &indexed_content.body);
-            return Some(new_doc)
-        }
+        info!("This is a new file, we need to process it");
+        let mut new_doc = Document::default();
+        let indexed_content = TextIndexer::index_file(entry_path);
+        trace!("{:?}", indexed_content);
+        
+        new_doc.add_text(title, &indexed_content.name);
+        new_doc.add_facet(location, location_facet);
+        new_doc.add_text(hash, file_hash.to_hex().as_str());
+        new_doc.add_text(body, &indexed_content.body);
+        return Some(new_doc)
     }
     None
 }
 
+// Builds the tantivy schema
 pub fn build_schema() -> Schema {
     let mut schema_builder = Schema::builder();
 
