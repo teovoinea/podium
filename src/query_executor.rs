@@ -8,7 +8,9 @@ use tantivy::schema::*;
 
 use std::sync::mpsc::*;
 
-
+// Starts the query executor thread
+// It receives queries as strings and prints them out to console
+// TODO: Return the query result (probably through another channel) for when the UI is implemented
 pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>, schema: &Schema) {
     info!("Starting query executor thread");
     for query_string in queries.iter() {

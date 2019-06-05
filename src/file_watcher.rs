@@ -1,13 +1,18 @@
-use std::time::Duration;
+use crate::tantivy_api::*;
+
 use notify::{Watcher, RecursiveMode, watcher, DebouncedEvent};
 use tantivy::schema::*;
-use crate::tantivy_api::*;
-use std::sync::mpsc::*;
 use tantivy::IndexReader;
 use tantivy::schema::Value;
-use std::sync::mpsc::channel;
 use walkdir::{DirEntry};
 
+use std::sync::mpsc::*;
+use std::sync::mpsc::channel;
+use std::time::Duration;
+
+// Starts the file watcher thread
+// Reacts to document changes (create/update/delete)
+// Does appropriate housekeeping for documents (eg: removing old documents after update)
 pub fn start_watcher(directories: Vec<String>, index_writer: Sender<WriterAction>, schema: Schema, index_reader: IndexReader) {
     info!("Starting file watcher thread on: {:?}", directories);
     let (watcher_tx, watcher_rx) = channel();

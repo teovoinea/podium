@@ -1,22 +1,28 @@
-use app_dirs::*;
-use notify_rust::Notification;
-use std::path::Path;
-use std::fs;
-use config::*;
-use tantivy::ReloadPolicy;
-use tantivy::directory::*;
-use std::thread;
-use walkdir::WalkDir;
-use tantivy::{Index, Term};
-use std::sync::mpsc::*;
-use std::collections::HashMap;
-
 use crate::query_executor;
 use crate::tantivy_api::*;
 use crate::file_watcher::*;
 
+use app_dirs::*;
+use config::*;
+use notify_rust::Notification;
+use tantivy::directory::*;
+use tantivy::{Index, Term, ReloadPolicy};
+use walkdir::WalkDir;
+
+use std::thread;
+use std::path::Path;
+use std::fs;
+use std::sync::mpsc::*;
+use std::collections::HashMap;
+
 const APP_INFO: AppInfo = AppInfo{name: "Podium", author: "Teodor Voinea"};
 
+// Starts tantivy thread
+// Starts file watcher thread
+// Does initial file processing
+// Starts reader thread
+// Owns tantivy's index_writer so it's able to write/delete documents
+// TODO: This function does too much? Should break it up
 pub fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::Result<()> {
     let index_path = app_dir(AppDataType::UserData, &APP_INFO, "index").unwrap();
     info!("Using index file in: {:?}", index_path);
