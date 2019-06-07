@@ -10,8 +10,7 @@ use std::sync::mpsc::*;
 
 // Starts the query executor thread
 // It receives queries as strings and prints them out to console
-// TODO: Return the query result (probably through another channel) for when the UI is implemented
-pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>, schema: &Schema) {
+pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>, schema: &Schema, results: Sender<Vec<String>>) {
     info!("Starting query executor thread");
     for query_string in queries.iter() {
         // Searchers are cheap and should be regenerated for each query
@@ -25,9 +24,12 @@ pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>
 
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
 
-        for (_score, doc_address) in top_docs {
-            let retrieved_doc = searcher.doc(doc_address).unwrap();
-            info!("{}", schema.to_json(&retrieved_doc));
-        }
+        let result: Vec<String> = top_docs.into_iter()
+                .map(|(_score, doc_address)| searcher.doc(doc_address).unwrap())
+                .map(|retrieved_doc| schema.to_json(&retrieved_doc))
+                .collect();
+
+        // TODO: Handle error
+        results.send(result);
     }
 }

@@ -23,7 +23,7 @@ const APP_INFO: AppInfo = AppInfo{name: "Podium", author: "Teodor Voinea"};
 // Starts reader thread
 // Owns tantivy's index_writer so it's able to write/delete documents
 // TODO: This function does too much? Should break it up
-pub fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tantivy::Result<()> {
+pub fn start_tantivy(query_channel: (Sender<String>, Receiver<String>), result_tx: Sender<Vec<String>>) -> tantivy::Result<()> {
     let index_path = app_dir(AppDataType::UserData, &APP_INFO, "index").unwrap();
     info!("Using index file in: {:?}", index_path);
 
@@ -123,7 +123,7 @@ pub fn start_tantivy(query_channel: (Sender<String>, Receiver<String>)) -> tanti
 
     let _reader_thread = thread::Builder::new()
                             .name("tantivy_reader".to_string())
-                            .spawn(move || query_executor::start_reader(index, reader, reader_rx, &reader_schema));
+                            .spawn(move || query_executor::start_reader(index, reader, reader_rx, &reader_schema, result_tx));
 
     for writer_action in index_writer_rx.iter() {
         match writer_action {
