@@ -6,7 +6,6 @@ extern crate notify;
 extern crate notify_rust;
 #[macro_use] extern crate serde_derive;
 extern crate serde_json;
-extern crate sysbar;
 extern crate simple_logger;
 extern crate tantivy;
 extern crate web_view;
