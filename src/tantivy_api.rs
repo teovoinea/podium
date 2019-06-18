@@ -1,5 +1,4 @@
-use crate::indexers::TextIndexer;
-use crate::indexers::Indexer;
+use crate::indexers::*;
 
 use tantivy::schema::*;
 use tantivy::IndexReader;
@@ -144,6 +143,7 @@ pub fn update_existing_file(entry_path: &Path, schema: &Schema, index_reader: &I
 }
 
 // Processes a file by running all available indexers on it
+// Updates an existing entry if necessary
 pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Option<Document> {
     let canonical_path = entry_path.canonicalize().unwrap();
     let location_facet = canonical_path.to_str().unwrap();
@@ -155,20 +155,30 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
         return Some(doc)
     }
 
-    // We're indexing this file for the first time
-    if TextIndexer::supports_extension(entry_path.extension().unwrap()) {
-        let (title, hash, location, body) = destructure_schema(schema);
+    let analyzer = Analyzer {
+        indexers: vec![Box::new(TextIndexer), Box::new(ExifIndexer)]
+    };
+
+    // We're indexing the file for the first time
+    let results = analyzer.analyze(entry_path.extension().unwrap(), entry_path);
+    if results.len() > 0 {
         info!("This is a new file, we need to process it");
+        let title = &results[0].name;
+        let body = results.iter().fold(String::new(), |mut acc, x| { acc.push_str(&x.body); acc });
+
+        let (title_field, hash_field, location_field, body_field) = destructure_schema(schema);
         let mut new_doc = Document::default();
-        let indexed_content = TextIndexer::index_file(entry_path);
-        trace!("{:?}", indexed_content);
-        
-        new_doc.add_text(title, &indexed_content.name);
-        new_doc.add_facet(location, location_facet);
-        new_doc.add_text(hash, file_hash.to_hex().as_str());
-        new_doc.add_text(body, &indexed_content.body);
+
+        new_doc.add_text(title_field, &title);
+        new_doc.add_facet(location_field, location_facet);
+        new_doc.add_text(hash_field, file_hash.to_hex().as_str());
+        new_doc.add_text(body_field, &body);
         return Some(new_doc)
     }
+    else {
+        info!("Couldn't find any indexers for file with extension: {}", entry_path.extension().unwrap().to_str().unwrap());
+    }
+
     None
 }
 

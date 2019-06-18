@@ -1,9 +1,12 @@
 extern crate app_dirs;
 extern crate blake2b_simd;
 extern crate config;
+extern crate exif;
+#[macro_use] extern crate lazy_static;
 #[macro_use] extern crate log;
 extern crate notify;
 extern crate notify_rust;
+extern crate reverse_geocoder;
 #[macro_use] extern crate serde_derive;
 extern crate serde_json;
 extern crate sysbar;
