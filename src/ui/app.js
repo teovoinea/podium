@@ -13,7 +13,7 @@ var rpc = {
         }
         rpc.invoke({cmd : 'log', text : s});
     },
-    search: function(query) { rpc.invoke({cmd: 'search', query: query}); },
+    search: function(query) { console.log("Searching..."); rpc.invoke({cmd: 'search', query: query}); },
     render: function(results) { 
         var resultsString = results
             .map(result => JSON.parse(result))

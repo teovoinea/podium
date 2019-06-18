@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
     <head>
-        <link rel="stylesheet" href="styles.css"> 
+        {styles}
     </head>
     <body>
         <!--[if lt IE 9]>
@@ -10,20 +10,20 @@
             <a class="ie-upgrade-link" target="_blank" href="https://www.microsoft.com/en-us/download/internet-explorer.aspx">Upgrade</a>
         </div>
         <![endif]-->
-        <!--[if gte IE 9 | !IE ]> 
+        <!--[if gte IE 9 | !IE ]> <!-->
+            {scripts}
         <![endif]-->
         <main>
             <h1 id="heading">Podium Search</h1>
             <input id="search_bar" type="text" onkeydown="search(this)" placeholder="Enter Search Terms"/>
-            <div id="results">
-                <div id="results_heading"></div>
-                <ul class="results_list">
-                    <li class="list_element">Test1</li>
-                    <li class="list_element">Test2</li>
-                    <li class="list_element">Test3: HOVER ME</li>
-                    <li class="list_element">Test4</li>
-                </ul>
-            </div>
+            <div id="results"></div>
+            <div id="results_heading"></div>
+            <ul class="results_list">
+                <li class="list_element">Test1</li>
+                <li class="list_element">Test2</li>
+                <li class="list_element">Test3: HOVER ME</li>
+                <li class="list_element">Test4</li>
+            </ul>
             <script src="app.js"></script>
         </main>
     </body>
