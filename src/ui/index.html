@@ -11,10 +11,20 @@
         </div>
         <![endif]-->
         <!--[if gte IE 9 | !IE ]> <!-->
-        {scripts}
+            {scripts}
         <![endif]-->
-        <h1>Search for something!</h1>
-        <input type="text" onkeydown="search(this)"/>
-        <div id="results"></div>
+        <main>
+            <h1 id="heading">Podium Search</h1>
+            <input id="search_bar" type="text" onkeydown="search(this)" placeholder="Enter Search Terms"/>
+            <div id="results"></div>
+            <div id="results_heading"></div>
+            <ul class="results_list">
+                <li class="list_element">Test1</li>
+                <li class="list_element">Test2</li>
+                <li class="list_element">Test3: HOVER ME</li>
+                <li class="list_element">Test4</li>
+            </ul>
+            <script src="app.js"></script>
+        </main>
     </body>
 </html>
