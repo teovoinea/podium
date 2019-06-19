@@ -156,7 +156,7 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
     }
 
     let analyzer = Analyzer {
-        indexers: vec![Box::new(TextIndexer), Box::new(ExifIndexer), Box::new(PdfIndexer)]
+        indexers: vec![Box::new(TextIndexer), Box::new(ExifIndexer), Box::new(PdfIndexer), Box::new(MobileNetV2Indexer)]
     };
 
     // We're indexing the file for the first time
@@ -164,7 +164,8 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
     if results.len() > 0 {
         info!("This is a new file, we need to process it");
         let title = &results[0].name;
-        let body = results.iter().fold(String::new(), |mut acc, x| { acc.push_str(&x.body); acc });
+        let body = results.iter().fold(String::new(), |mut acc, x| { acc.push_str(&x.body); acc.push_str(" "); acc });
+        info!("{:?} {:?}", title, body);
 
         let (title_field, hash_field, location_field, body_field) = destructure_schema(schema);
         let mut new_doc = Document::default();

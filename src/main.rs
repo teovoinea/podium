@@ -2,6 +2,7 @@ extern crate app_dirs;
 extern crate blake2b_simd;
 extern crate config;
 extern crate exif;
+extern crate image;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate log;
 extern crate notify;
@@ -14,6 +15,8 @@ extern crate serde_json;
 extern crate sysbar;
 extern crate simple_logger;
 extern crate tantivy;
+extern crate tract_core;
+extern crate tract_tensorflow;
 extern crate web_view;
 
 use web_view::*;

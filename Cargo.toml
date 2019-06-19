@@ -24,6 +24,9 @@ kamadak-exif = "0.3"
 reverse_geocoder = { git = "https://github.com/llambda/rrgeo"}
 pdf-extract = { git = "https://github.com/jrmuizel/pdf-extract"}
 regex = "1"
+tract-tensorflow = "0.3.3"
+tract-core = "0.3.3"
+image = "0.21.2"
 
 [target."cfg(windows)".dependencies]
 systray = "0.3.0"
