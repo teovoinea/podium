@@ -2,12 +2,10 @@ use super::Indexer;
 use super::DocumentSchema;
 use std::path::Path;
 use std::ffi::OsStr;
-use std::fs;
 use exif::{Tag, Value, Rational};
 
 use reverse_geocoder::{
     Locations,
-    Record,
     ReverseGeocoder,
 };
 

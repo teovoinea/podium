@@ -156,7 +156,7 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
     }
 
     let analyzer = Analyzer {
-        indexers: vec![Box::new(TextIndexer), Box::new(ExifIndexer)]
+        indexers: vec![Box::new(TextIndexer), Box::new(ExifIndexer), Box::new(PdfIndexer)]
     };
 
     // We're indexing the file for the first time

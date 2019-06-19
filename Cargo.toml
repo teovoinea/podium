@@ -22,6 +22,8 @@ serde_derive = "1.0"
 lazy_static = "1.3.0"
 kamadak-exif = "0.3"
 reverse_geocoder = { git = "https://github.com/llambda/rrgeo"}
+pdf-extract = { git = "https://github.com/jrmuizel/pdf-extract"}
+regex = "1"
 
 [target."cfg(windows)".dependencies]
 systray = "0.3.0"
