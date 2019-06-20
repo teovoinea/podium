@@ -8,6 +8,8 @@ extern crate exif;
 extern crate image;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate log;
+extern crate msoffice_pptx;
+extern crate msoffice_shared;
 extern crate notify;
 extern crate notify_rust;
 extern crate pdf_extract;
