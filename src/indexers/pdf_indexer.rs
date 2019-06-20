@@ -32,9 +32,10 @@ impl Indexer for PdfIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
-    fn test_indexing_text_file() {
+    fn test_indexing_pdf_file() {
         let test_file_path = Path::new("./test_files/Cats.pdf");
         let indexed_document = PdfIndexer.index_file(test_file_path);
         
@@ -43,8 +44,16 @@ mod tests {
     }
 
     #[test]
-    fn test_supports_text_extension() {
+    fn test_supports_pdf_extension() {
         assert_eq!(true, PdfIndexer.supports_extension(OsStr::new("pdf")));
         assert_eq!(false, PdfIndexer.supports_extension(OsStr::new("docx")))
+    }
+
+    #[bench]
+    fn bench_indexing_pdf_file(b: &mut Bencher) {
+        b.iter(|| {
+            let bench_file_path = test::black_box(Path::new("./test_files/Cats.pdf"));
+            PdfIndexer.index_file(bench_file_path)
+        });
     }
 }

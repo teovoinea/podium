@@ -85,6 +85,7 @@ fn def_to_dec_dec(deg: f64, min: f64, sec: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_indexing_text_file() {
@@ -102,5 +103,13 @@ mod tests {
         assert_eq!(true, ExifIndexer.supports_extension(OsStr::new("jpg")));
         assert_eq!(true, ExifIndexer.supports_extension(OsStr::new("jpeg")));
         assert_eq!(false, ExifIndexer.supports_extension(OsStr::new("png")));
+    }
+
+    #[bench]
+    fn bench_indexing_exif_file(b: &mut Bencher) {
+        b.iter(|| {
+            let bench_file_path = test::black_box(Path::new("./test_files/IMG_2551.jpeg"));
+            ExifIndexer.index_file(bench_file_path)
+        });
     }
 }

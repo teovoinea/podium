@@ -1,3 +1,5 @@
+#![feature(test)]
+
 extern crate app_dirs;
 extern crate blake2b_simd;
 extern crate config;
@@ -15,6 +17,7 @@ extern crate serde_json;
 extern crate sysbar;
 extern crate simple_logger;
 extern crate tantivy;
+extern crate test;
 extern crate tract_core;
 extern crate tract_tensorflow;
 extern crate web_view;

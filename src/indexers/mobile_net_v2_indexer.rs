@@ -99,9 +99,10 @@ impl Indexer for MobileNetV2Indexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
-    fn test_indexing_text_file() {
+    fn test_indexing_mobile_net_v2_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
         let indexed_document = MobileNetV2Indexer.index_file(test_file_path);
 
@@ -110,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_supports_text_extension() {
+    fn test_supports_mobile_net_v2_extension() {
         assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("tif")));
         assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("tiff")));
         assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("jpg")));
@@ -120,5 +121,13 @@ mod tests {
         assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("ico")));
         assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("gif")));
         assert_eq!(false, MobileNetV2Indexer.supports_extension(OsStr::new("webp")));
+    }
+
+    #[bench]
+    fn bench_indexing_mobile_net_v2_file(b: &mut Bencher) {
+        b.iter(|| {
+            let bench_file_path = test::black_box(Path::new("./test_files/IMG_2551.jpeg"));
+            MobileNetV2Indexer.index_file(bench_file_path)
+        });
     }
 }
