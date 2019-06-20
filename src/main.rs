@@ -3,6 +3,7 @@
 extern crate app_dirs;
 extern crate blake2b_simd;
 extern crate config;
+extern crate docx;
 extern crate exif;
 extern crate image;
 #[macro_use] extern crate lazy_static;

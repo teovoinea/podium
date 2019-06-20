@@ -2,6 +2,7 @@ mod text_indexer;
 mod exif_indexer;
 mod pdf_indexer;
 mod mobile_net_v2_indexer;
+// mod docx_indexer;
 
 use std::path::Path;
 use std::ffi::OsStr;
@@ -9,6 +10,7 @@ pub use self::text_indexer::TextIndexer;
 pub use self::exif_indexer::ExifIndexer;
 pub use self::pdf_indexer::PdfIndexer;
 pub use self::mobile_net_v2_indexer::MobileNetV2Indexer;
+// pub use self::docx_indexer::DocxIndexer;
 
 #[derive(Debug)]
 pub struct DocumentSchema {

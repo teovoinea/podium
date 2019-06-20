@@ -27,6 +27,7 @@ regex = "1"
 tract-tensorflow = "0.3.3"
 tract-core = "0.3.3"
 image = "0.21.2"
+docx = "0.1.2"
 
 [target."cfg(windows)".dependencies]
 systray = "0.3.0"
