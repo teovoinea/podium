@@ -160,7 +160,8 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
                         Box::new(ExifIndexer),
                         Box::new(PdfIndexer),
                         Box::new(MobileNetV2Indexer),
-                        Box::new(PptxIndexer)]
+                        Box::new(PptxIndexer),
+                        Box::new(CsvIndexer)]
     };
 
     // We're indexing the file for the first time

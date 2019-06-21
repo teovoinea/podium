@@ -3,6 +3,7 @@
 extern crate app_dirs;
 extern crate blake2b_simd;
 extern crate config;
+extern crate csv;
 extern crate docx;
 extern crate exif;
 extern crate image;
