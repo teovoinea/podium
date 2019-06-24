@@ -2,6 +2,7 @@
 
 extern crate app_dirs;
 extern crate blake2b_simd;
+extern crate calamine;
 extern crate config;
 extern crate csv;
 extern crate docx;

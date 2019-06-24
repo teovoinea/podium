@@ -161,7 +161,8 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
                         Box::new(PdfIndexer),
                         Box::new(MobileNetV2Indexer),
                         Box::new(PptxIndexer),
-                        Box::new(CsvIndexer)]
+                        Box::new(CsvIndexer),
+                        Box::new(SpreadsheetIndexer)]
     };
 
     // We're indexing the file for the first time

@@ -31,6 +31,7 @@ docx = "0.1.2"
 msoffice_pptx = "0.2.1"
 msoffice_shared = "0.1.1"
 csv = "1"
+calamine = "0.15.4"
 
 [target."cfg(windows)".dependencies]
 systray = "0.3.0"
