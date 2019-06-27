@@ -7,10 +7,20 @@ use tantivy::collector::TopDocs;
 use tantivy::schema::*;
 
 use std::sync::mpsc::*;
+use std::path::*;
+
+pub type QueryResponse = Vec<Response>;
+
+#[derive(Debug)]
+pub struct Response {
+    pub title: String,
+    pub location: Vec<PathBuf>,
+    pub body: String
+}
 
 // Starts the query executor thread
 // It receives queries as strings and prints them out to console
-pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>, schema: &Schema, results: Sender<Vec<String>>) {
+pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>, schema: &Schema, results: Sender<QueryResponse>) {
     info!("Starting query executor thread");
     for query_string in queries.iter() {
         // Searchers are cheap and should be regenerated for each query
@@ -24,9 +34,28 @@ pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>
 
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
 
-        let result: Vec<String> = top_docs.into_iter()
+        let result = top_docs.into_iter()
                 .map(|(_score, doc_address)| searcher.doc(doc_address).unwrap())
-                .map(|retrieved_doc| schema.to_json(&retrieved_doc))
+                .map(|retrieved_doc| { 
+                        let title = retrieved_doc.get_all(title).iter()
+                                                .map(|val| val.text())
+                                                .fold(String::new(), |mut acc, x| { acc.push_str(x.unwrap()); acc.push_str(" "); acc });
+                        let location = retrieved_doc.get_all(location).iter()
+                                                .filter_map(|val| {
+                                                        match &val {
+                                                                Value::Facet(loc_str) => Some(Path::new(loc_str.encoded_str()).to_path_buf()),
+                                                                _ => None
+                                                        }
+                                                })
+                                                .collect();
+                        let body = retrieved_doc.get_all(body).iter()
+                                                .map(|val| val.text())
+                                                .fold(String::new(), |mut acc, x| { acc.push_str(x.unwrap()); acc.push_str(" "); acc });
+                        Response {
+                                title, location, body
+                        }
+                })
+
                 .collect();
 
         // TODO: Handle error

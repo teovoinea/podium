@@ -33,6 +33,7 @@ use std::sync::mpsc::channel;
 use std::thread;
 use std::time::{Duration, Instant};
 
+mod ui;
 mod indexers;
 mod query_executor;
 mod tantivy_api;
@@ -56,56 +57,12 @@ fn main() {
         start_tantivy((tantivy_query_tx, query_rx), result_tx)
     });
 
-    let html = format!(include_str!("ui/index.html"),
-		styles = inline_style(include_str!("ui/styles.css")),
-		scripts = inline_script(include_str!("ui/app.js")),
-    );
+    ui::run_window(query_tx, result_rx);
 
-    web_view::builder()
-        .title("Podium")
-        .content(Content::Html(html))
-        .size(800, 600)
-        .resizable(true)
-        .debug(true)
-        .user_data(UserData {
-            query: "".to_string(),
-            results: vec![],
-        })
-        .invoke_handler(|webview, arg| {
-            use Cmd::*;
-
-            let data = webview.user_data_mut();
-
-            match serde_json::from_str(arg).unwrap() {
-                Init => (),
-                Log { text } => println!("{}", text),
-                Search { query } => {
-                    println!("Here is where I would search for {}", query);
-                    let now = Instant::now();
-                    query_tx.send(query).unwrap();
-                    data.results = result_rx.recv().unwrap();
-                    println!("It took {} microseconds to execute query", now.elapsed().as_micros());
-                },
-            }
-            render(webview)
-        })
-        .run()
-        .unwrap();
-
-    // let mut bar = sysbar::Sysbar::new("P");
-    // bar.add_item(
-    //     "Search",
-    //     Box::new(move || {
-    //         println!("Searching!");
-    //         query_tx.send("digimon".to_string()).unwrap();
-    //     }),
-    // );
-
-    // bar.add_quit_item("Quit");
-
-    // bar.display();
-
-    // trace!("Taskbar has quit, cleaning up remaining threads...");
+    //     let now = Instant::now();
+    // query_tx.send(query).unwrap();
+    // data.results = result_rx.recv().unwrap();
+    // println!("It took {} microseconds to execute query", now.elapsed().as_micros());
 
     // TODO: Handle error
     tantivy_thread.unwrap().join();
