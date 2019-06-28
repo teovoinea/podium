@@ -29,7 +29,6 @@ impl Indexer for DocxIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
 
     #[test]
     fn test_indexing_docx_file() {

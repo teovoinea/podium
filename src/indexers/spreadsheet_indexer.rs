@@ -42,7 +42,6 @@ impl Indexer for SpreadsheetIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
 
     #[test]
     fn test_indexing_spreadsheet_file() {
@@ -57,13 +56,5 @@ mod tests {
     fn test_supports_spreadsheet_extension() {
         assert_eq!(true, SpreadsheetIndexer.supports_extension(OsStr::new("xlsx")));
         assert_eq!(false, SpreadsheetIndexer.supports_extension(OsStr::new("xls"))); // not yet..
-    }
-
-    #[bench]
-    fn bench_indexing_spreadsheet_file(b: &mut Bencher) {
-        b.iter(|| {
-            let bench_file_path = test::black_box(Path::new("./test_files/Cats.xlsx"));
-            SpreadsheetIndexer.index_file(bench_file_path)
-        });
     }
 }

@@ -40,12 +40,25 @@ imgui-winit-support = { version = "0.0.24-pre", git = "https://github.com/Gekkio
 imgui-sys = { version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
 winit = "0.19"
 
+[dev-dependencies]
+criterion = "0.2"
 
 [target."cfg(windows)".dependencies]
 systray = "0.3.0"
 
+[lib]
+name = "podium_lib"
+path = "src/lib.rs"
+bench = false
+
 [[bin]]
 name = "podium"
+path = "src/bin.rs"
+bench = false
+
+[[bench]]
+name = "my_benchmark"
+harness = false
 
 [profile.release]
 opt-level = 3
@@ -57,13 +70,13 @@ codegen-units = 1
 panic = 'unwind'
 overflow-checks = false
 
-[profile.bench]
-opt-level = 3
-debug = false
-rpath = false
-lto = false
-debug-assertions = false
-codegen-units = 16
-panic = 'unwind'
-incremental = false
-overflow-checks = false
+# [profile.bench]
+# opt-level = 3
+# debug = false
+# rpath = false
+# lto = false
+# debug-assertions = false
+# codegen-units = 16
+# panic = 'unwind'
+# incremental = false
+# overflow-checks = false

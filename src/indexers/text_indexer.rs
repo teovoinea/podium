@@ -23,7 +23,6 @@ impl Indexer for TextIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
 
     #[test]
     fn test_indexing_text_file() {
@@ -38,13 +37,5 @@ mod tests {
     fn test_supports_text_extension() {
         assert_eq!(true, TextIndexer.supports_extension(OsStr::new("txt")));
         assert_eq!(false, TextIndexer.supports_extension(OsStr::new("png")));
-    }
-
-    #[bench]
-    fn bench_indexing_text_file(b: &mut Bencher) {
-        b.iter(|| {
-            let bench_file_path = test::black_box(Path::new("./test_files/file.txt"));
-            TextIndexer.index_file(bench_file_path)
-        });
     }
 }

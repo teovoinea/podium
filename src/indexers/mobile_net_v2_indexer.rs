@@ -29,7 +29,7 @@ lazy_static! {
 
         // optimize the model and get an execution plan
         let model = model.into_optimized().unwrap();
-        println!("It took {} microseconds to load and optimize the model", now.elapsed().as_micros());
+        info!("It took {} microseconds to load and optimize the model", now.elapsed().as_micros());
         model
     };
 }
@@ -54,24 +54,24 @@ impl Indexer for MobileNetV2Indexer {
         let now = Instant::now();
         let t_model = MODEL.clone();
         let plan = SimplePlan::new(&t_model).unwrap();
-        println!("It took {} microseconds to clone and build the plan", now.elapsed().as_micros());
+        // println!("It took {} microseconds to clone and build the plan", now.elapsed().as_micros());
 
-        let now = Instant::now();
+        // let now = Instant::now();
         // open image, resize it and make a Tensor out of it
         let image = image::open(path).unwrap().to_rgb();
-        println!("It took {} microseconds to load the image from disk", now.elapsed().as_micros());
-        let now = Instant::now();
+        // println!("It took {} microseconds to load the image from disk", now.elapsed().as_micros());
+        // let now = Instant::now();
         let resized = image::imageops::resize(&image, 224, 224, ::image::FilterType::Triangle);
         let image: Tensor = ndarray::Array4::from_shape_fn((1, 224, 224, 3), |(_, y, x, c)| {
             resized[(x as _, y as _)][c] as f32 / 255.0
         })
         .into();
-        println!("It took {} microseconds to pre-process the image", now.elapsed().as_micros());
+        // println!("It took {} microseconds to pre-process the image", now.elapsed().as_micros());
 
         let now = Instant::now();
         // run the plan on the input
         let result = plan.run(tvec!(image)).unwrap();
-        println!("It took {} microseconds to run the image on the plan", now.elapsed().as_micros());
+        // println!("It took {} microseconds to run the image on the plan", now.elapsed().as_micros());
 
         // find and display the max value with its index
         let best = result[0]
@@ -87,7 +87,7 @@ impl Indexer for MobileNetV2Indexer {
             body_res = LABELS.get(index as usize - 1).unwrap();
         }
 
-        dbg!(body_res);
+        // dbg!(body_res);
 
         DocumentSchema {
             name: String::new(),
@@ -99,7 +99,6 @@ impl Indexer for MobileNetV2Indexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
 
     #[test]
     fn test_indexing_mobile_net_v2_file() {
@@ -121,13 +120,5 @@ mod tests {
         assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("ico")));
         assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("gif")));
         assert_eq!(false, MobileNetV2Indexer.supports_extension(OsStr::new("webp")));
-    }
-
-    #[bench]
-    fn bench_indexing_mobile_net_v2_file(b: &mut Bencher) {
-        b.iter(|| {
-            let bench_file_path = test::black_box(Path::new("./test_files/IMG_2551.jpeg"));
-            MobileNetV2Indexer.index_file(bench_file_path)
-        });
     }
 }

@@ -29,8 +29,6 @@ impl Indexer for PptxIndexer {
             }
         }
 
-        dbg!(&total_text);
-
         DocumentSchema {
             name: String::new(),
             body: total_text,
@@ -80,7 +78,6 @@ fn extract_text(shape_group: &ShapeGroup) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
 
     #[test]
     fn test_indexing_pptx_file() {
@@ -99,13 +96,5 @@ mod tests {
     fn test_supports_pptgx_extension() {
         assert_eq!(true, PptxIndexer.supports_extension(OsStr::new("pptx")));
         assert_eq!(false, PptxIndexer.supports_extension(OsStr::new("ppt")));
-    }
-
-    #[bench]
-    fn bench_indexing_pptx_file(b: &mut Bencher) {
-        b.iter(|| {
-            let bench_file_path = test::black_box(Path::new("./test_files/Cats.pptx"));
-            PptxIndexer.index_file(bench_file_path)
-        });
     }
 }

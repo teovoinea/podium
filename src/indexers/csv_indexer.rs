@@ -19,7 +19,6 @@ impl Indexer for CsvIndexer {
                             .unwrap()
                             .iter()
                             .fold(String::new(), |mut acc, x| { acc.push_str(&x); acc.push_str(" "); acc });
-            dbg!(&headers);
             DocumentSchema {
                 name: String::new(),
                 body: headers
@@ -37,7 +36,6 @@ impl Indexer for CsvIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
 
     #[test]
     fn test_indexing_csv_file() {
@@ -52,13 +50,5 @@ mod tests {
     fn test_supports_csv_extension() {
         assert_eq!(true, CsvIndexer.supports_extension(OsStr::new("csv")));
         assert_eq!(false, CsvIndexer.supports_extension(OsStr::new("xslx")));
-    }
-
-    #[bench]
-    fn bench_indexing_csv_file(b: &mut Bencher) {
-        b.iter(|| {
-            let bench_file_path = test::black_box(Path::new("./test_files/data.csv"));
-            CsvIndexer.index_file(bench_file_path)
-        });
     }
 }
