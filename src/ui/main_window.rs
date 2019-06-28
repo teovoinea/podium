@@ -37,7 +37,9 @@ pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<Query
         response: None
     };
     super::support::run("hello_world.rs".to_owned(), CLEAR_COLOR, |ui, gl_ctx, textures| {
-        state.icon_texture = Some(Icon::new(gl_ctx, textures).unwrap());
+        if state.icon_texture.is_none() {
+            state.icon_texture = Some(Icon::new(gl_ctx, textures).unwrap());
+        }
         hello_world(&mut state, ui, &query_sender, &results_receiver)
     });
 }
