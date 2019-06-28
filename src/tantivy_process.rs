@@ -4,7 +4,6 @@ use crate::file_watcher::*;
 
 use app_dirs::*;
 use config::*;
-use notify_rust::Notification;
 use tantivy::directory::*;
 use tantivy::{Index, Term, ReloadPolicy};
 use walkdir::WalkDir;
@@ -39,10 +38,10 @@ pub fn start_tantivy(query_channel: (Sender<String>, Receiver<String>), result_t
     if !config_file.as_path().exists() {
         info!("Config file not found, copying default config");
 
-        Notification::new().summary("Welcome!")
-                        .body("Since this is your first time running podium, it will take a few minutes to index your files.")
-                        .show()
-                        .unwrap();
+        // Notification::new().summary("Welcome!")
+        //                 .body("Since this is your first time running podium, it will take a few minutes to index your files.")
+        //                 .show()
+        //                 .unwrap();
 
         let default_config_path = Path::new("debug_default_config.json");
         fs::copy(default_config_path, &config_file).unwrap();
