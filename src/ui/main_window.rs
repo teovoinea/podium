@@ -104,10 +104,11 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
                                     // ui.same_line(0.0);
                                     if ui.button(&ImString::from(location.clone()), (400.0, ui.get_text_line_height_with_spacing())) {
                                         println!("Trying to open {:?}", location.clone());
-                                        Command::new("open")
-                                                .arg(location.clone())
-                                                .output()
-                                                .expect("Failed to open file");
+                                        opener::open(location.clone());
+                                        // Command::new("open")
+                                        //         .arg(location.clone())
+                                        //         .output()
+                                        //         .expect("Failed to open file");
                                     }
                                 });
                     });

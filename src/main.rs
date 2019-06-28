@@ -67,28 +67,3 @@ fn main() {
     // TODO: Handle error
     tantivy_thread.unwrap().join();
 }
-
-
-fn render(webview: &mut WebView<UserData>) -> WVResult {
-    let render_tasks = {
-        let data = webview.user_data();
-        format!("rpc.render({})", serde_json::to_string(&data.results).unwrap())
-    };
-    webview.eval(&render_tasks)
-}
-
-#[derive(Deserialize)]
-#[serde(tag = "cmd", rename_all = "camelCase")]
-pub enum Cmd {
-    Init,
-    Log { text: String },
-    Search { query: String },
-}
-
-fn inline_style(s: &str) -> String {
-    format!(r#"<style type="text/css">{}</style>"#, s)
-}
-
-fn inline_script(s: &str) -> String {
-    format!(r#"<script type="text/javascript">{}</script>"#, s)
-}
