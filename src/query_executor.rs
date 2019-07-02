@@ -43,7 +43,7 @@ pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>
                         let location = retrieved_doc.get_all(location).iter()
                                                 .filter_map(|val| {
                                                         match &val {
-                                                                Value::Facet(loc_str) => Some(Path::new(loc_str.encoded_str()).to_path_buf()),
+                                                                Value::Facet(loc_str) => Some(Path::from_facet_value(loc_str)),
                                                                 _ => None
                                                         }
                                                 })
