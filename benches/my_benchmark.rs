@@ -28,6 +28,7 @@ fn bench_indexing_exif_file(c: &mut Criterion) {
     });
 }
 
+#[cfg(not(target_os = "windows"))]
 fn bench_indexing_mobile_net_v2_file(c: &mut Criterion) {
     c.bench_function("indexing_mobile_net_v2_file", |b| {
         b.iter(|| {
@@ -73,6 +74,7 @@ fn bench_indexing_text_file(c: &mut Criterion) {
     });
 }
 
+#[cfg(not(target_os = "windows"))]
 criterion_group!(benches,
                 bench_indexing_csv_file,
                 bench_indexing_exif_file,
@@ -82,4 +84,15 @@ criterion_group!(benches,
                 bench_indexing_pptx_file,
                 bench_indexing_spreadsheet_file,
                 bench_indexing_text_file,);
+
+#[cfg(target_os = "windows")]
+criterion_group!(benches,
+                bench_indexing_csv_file,
+                bench_indexing_exif_file,
+                bench_indexing_pdf_file,
+                bench_indexing_exif_file,
+                bench_indexing_pptx_file,
+                bench_indexing_spreadsheet_file,
+                bench_indexing_text_file,);
+                
 criterion_main!(benches);

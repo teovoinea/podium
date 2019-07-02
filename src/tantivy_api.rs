@@ -155,15 +155,7 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
         return Some(doc)
     }
 
-    let analyzer = Analyzer {
-        indexers: vec![Box::new(TextIndexer),
-                        Box::new(ExifIndexer),
-                        Box::new(PdfIndexer),
-                        Box::new(MobileNetV2Indexer),
-                        Box::new(PptxIndexer),
-                        Box::new(CsvIndexer),
-                        Box::new(SpreadsheetIndexer)]
-    };
+    let analyzer = get_analyzer();
 
     // We're indexing the file for the first time
     let results = analyzer.analyze(entry_path.extension().unwrap(), entry_path);
@@ -202,4 +194,29 @@ pub fn build_schema() -> Schema {
     schema_builder.add_text_field("body", TEXT | STORED);
 
     schema_builder.build()
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_analyzer() -> Analyzer {
+    Analyzer {
+        indexers: vec![Box::new(TextIndexer),
+                        Box::new(ExifIndexer),
+                        Box::new(PdfIndexer),
+                        Box::new(MobileNetV2Indexer),
+                        Box::new(PptxIndexer),
+                        Box::new(CsvIndexer),
+                        Box::new(SpreadsheetIndexer)]
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_analyzer() -> Analyzer {
+    Analyzer {
+        indexers: vec![Box::new(TextIndexer),
+                        Box::new(ExifIndexer),
+                        Box::new(PdfIndexer),
+                        Box::new(PptxIndexer),
+                        Box::new(CsvIndexer),
+                        Box::new(SpreadsheetIndexer)]
+    }
 }

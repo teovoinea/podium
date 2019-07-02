@@ -1,6 +1,7 @@
 mod text_indexer;
 mod exif_indexer;
 mod pdf_indexer;
+#[cfg(not(target_os = "windows"))]
 mod mobile_net_v2_indexer;
 // mod docx_indexer;
 mod pptx_indexer;
@@ -12,6 +13,7 @@ use std::ffi::OsStr;
 pub use self::text_indexer::TextIndexer;
 pub use self::exif_indexer::ExifIndexer;
 pub use self::pdf_indexer::PdfIndexer;
+#[cfg(not(target_os = "windows"))]
 pub use self::mobile_net_v2_indexer::MobileNetV2Indexer;
 // pub use self::docx_indexer::DocxIndexer;
 pub use self::pptx_indexer::PptxIndexer;

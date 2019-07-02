@@ -18,8 +18,6 @@ extern crate reverse_geocoder;
 extern crate serde_json;
 extern crate simple_logger;
 extern crate tantivy;
-extern crate tract_core;
-extern crate tract_tensorflow;
 
 
 pub mod indexers;

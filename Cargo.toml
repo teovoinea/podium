@@ -21,8 +21,6 @@ kamadak-exif = "0.3"
 reverse_geocoder = { git = "https://github.com/llambda/rrgeo"}
 pdf-extract = "0.4.6"
 regex = "1"
-tract-tensorflow = "0.3.3"
-tract-core = "0.3.3"
 image = "0.21.2"
 docx = "0.1.2"
 msoffice_pptx = "0.2.1"
@@ -36,6 +34,11 @@ imgui-glium-renderer = { version = "0.0.24-pre", git = "https://github.com/Gekki
 imgui-winit-support = { version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
 imgui-sys = { version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
 winit = "0.19"
+# Windows support isn't great for tensorflow-rust yet tensorflow = "0.13.0"
+
+[target."cfg(not(windows))".dependencies]
+tract-tensorflow = "0.3.3"
+tract-core = "0.3.3"
 
 [dev-dependencies]
 criterion = "0.2"
