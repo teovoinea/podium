@@ -247,8 +247,8 @@ impl TantivyConvert for Path {
     #[cfg(not(target_os = "windows"))]
     fn from_facet_value(facet_val: &Facet) -> PathBuf {
         let mut location = String::from("/");
-        location.push_str(facet_val.encoded_str()).replace(char::from(0), "/");
-        Path::new(location).to_path_buf()
+        location.push_str(&facet_val.encoded_str().replace(char::from(0), "/"));
+        Path::new(&location).to_path_buf()
     }
 }
 
