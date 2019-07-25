@@ -40,8 +40,17 @@ pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<Query
     if state.icon_texture.is_none() {
         state.icon_texture = Some(Icon::new(system.display.get_context(), system.renderer.textures()).unwrap());
     }
+    let san_fran = system.imgui.fonts().add_font(&[FontSource::TtfData {
+            data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
+            size_pixels: system.font_size * 2.0,
+            config: None,
+    }]);
+    system
+        .renderer
+        .reload_font_texture(&mut system.imgui)
+        .expect("Failed to reload fonts");
     system.main_loop(|_, ui| {
-        
+        let _sf = ui.push_font(san_fran);
         hello_world(&mut state, ui, &query_sender, &results_receiver)
     });
 }
@@ -82,7 +91,7 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
             .enter_returns_true(true)
             .build()
         {
-            // ui.set_keyboard_focus_here(-1);
+            ui.set_keyboard_focus_here(FocusedWidget::Next);
             if !state.query.to_str().trim().is_empty() {
                 dbg!(&state.query.to_str());
                 query_sender.send(String::from(state.query.to_str()));

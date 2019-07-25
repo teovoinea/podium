@@ -61,15 +61,6 @@ pub fn init(title: &str) -> System {
                 ..FontConfig::default()
             }),
         },
-        FontSource::TtfData {
-            data: include_bytes!("../../../assets/System San Francisco Display Regular.ttf"),
-            size_pixels: font_size,
-            config: Some(FontConfig {
-                rasterizer_multiply: 1.75,
-                glyph_ranges: FontGlyphRanges::japanese(),
-                ..FontConfig::default()
-            }),
-        },
     ]);
 
     imgui.io_mut().font_global_scale = (1.0 / hidpi_factor) as f32;
