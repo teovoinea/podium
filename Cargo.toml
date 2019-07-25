@@ -29,10 +29,10 @@ csv = "1"
 calamine = "0.15.4"
 opener = "0.4.0"
 glium = { version = "0.25", default-features = true }
-imgui = {version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
-imgui-glium-renderer = { version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
-imgui-winit-support = { version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
-imgui-sys = { version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
+imgui = {version = "0.1.0"}
+imgui-glium-renderer = { version = "0.1.0"}
+imgui-winit-support = { version = "0.1.0"}
+# imgui-sys = { version = "0.0.24-pre", git = "https://github.com/Gekkio/imgui-rs" }
 winit = "0.19"
 # Windows support isn't great for tensorflow-rust yet tensorflow = "0.13.0"
 

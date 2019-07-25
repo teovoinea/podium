@@ -1,20 +1,10 @@
-use glium::{
-    backend::{Context, Facade},
-    Texture2d,
-};
-use imgui::{FontGlyphRange, ImFontConfig, ImGui, Ui};
-use imgui_winit_support;
-use winit::dpi::LogicalSize;
-use std::rc::Rc;
+use glium::glutin::{self, Event, WindowEvent};
+use glium::{Display, Surface};
+use imgui::{Context, FontConfig, FontGlyphRanges, FontSource, Ui};
+use imgui_glium_renderer::Renderer;
+use imgui_winit_support::{HiDpiMode, WinitPlatform};
 use std::time::Instant;
-
-pub type Textures = imgui::Textures<Texture2d>;
-
-#[derive(Debug)]
-pub struct RunState {
-    pub status: bool,
-    pub showing_results: bool
-}
+use winit::dpi::LogicalSize;
 
 const SEARCH_SIZE: LogicalSize = LogicalSize {
     width: 680f64,
@@ -26,15 +16,21 @@ const RESULTS_SIZE: LogicalSize = LogicalSize {
     height: 500f64
 };
 
-pub fn run<F>(title: String, clear_color: [f32; 4], mut run_ui: F)
-where
-    F: FnMut(&Ui, &Rc<Context>, &mut Textures) -> RunState,
-{
-    use glium::glutin;
-    use glium::{Display, Surface};
-    use imgui_glium_renderer::Renderer;
+pub struct System {
+    pub events_loop: glutin::EventsLoop,
+    pub display: glium::Display,
+    pub imgui: Context,
+    pub platform: WinitPlatform,
+    pub renderer: Renderer,
+    pub font_size: f32,
+}
 
-    let mut events_loop = glutin::EventsLoop::new();
+pub fn init(title: &str) -> System {
+    let title = match title.rfind('/') {
+        Some(idx) => title.split_at(idx + 1).1,
+        None => title,
+    };
+    let events_loop = glutin::EventsLoop::new();
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title(title)
@@ -43,106 +39,116 @@ where
         // .with_transparency(true)
         .with_always_on_top(true)
         .with_decorations(false);
-    let display = Display::new(builder, context, &events_loop).unwrap();
-    let gl_window = display.gl_window();
-    let window = gl_window.window();
+    let display =
+        Display::new(builder, context, &events_loop).expect("Failed to initialize display");
 
-    let mut imgui = ImGui::init();
+    let mut imgui = Context::create();
     imgui.set_ini_filename(None);
 
-    // In the examples we only use integer DPI factors, because the UI can get very blurry
-    // otherwise. This might or might not be what you want in a real application.
-    let hidpi_factor = window.get_hidpi_factor().round();
+    let mut platform = WinitPlatform::init(&mut imgui);
+    {
+        let gl_window = display.gl_window();
+        let window = gl_window.window();
+        platform.attach_window(imgui.io_mut(), &window, HiDpiMode::Rounded);
+    }
 
-    let font_size = (18.0 * hidpi_factor) as f32;
+    let hidpi_factor = platform.hidpi_factor();
+    let font_size = (13.0 * hidpi_factor) as f32;
+    imgui.fonts().add_font(&[
+        FontSource::DefaultFontData {
+            config: Some(FontConfig {
+                size_pixels: font_size,
+                ..FontConfig::default()
+            }),
+        },
+        FontSource::TtfData {
+            data: include_bytes!("../../../assets/System San Francisco Display Regular.ttf"),
+            size_pixels: font_size,
+            config: Some(FontConfig {
+                rasterizer_multiply: 1.75,
+                glyph_ranges: FontGlyphRanges::japanese(),
+                ..FontConfig::default()
+            }),
+        },
+    ]);
 
-    imgui.fonts().add_default_font_with_config(
-        ImFontConfig::new()
-            .oversample_h(1)
-            .pixel_snap_h(true)
-            .size_pixels(font_size),
-    );
+    imgui.io_mut().font_global_scale = (1.0 / hidpi_factor) as f32;
 
-    // SEARCH font
-    let font_size = (26.0 * hidpi_factor) as f32;
-    imgui.fonts().add_font_with_config(
-        include_bytes!("../../../assets/System San Francisco Display Regular.ttf"),
-        ImFontConfig::new()
-            .merge_mode(true)
-            .oversample_h(1)
-            .pixel_snap_h(true)
-            .size_pixels(font_size)
-            .rasterizer_multiply(1.75),
-        &FontGlyphRange::japanese(),
-    );
+    let renderer = Renderer::init(&mut imgui, &display).expect("Failed to initialize renderer");
 
-    imgui.set_font_global_scale((1.0 / hidpi_factor) as f32);
+    System {
+        events_loop,
+        display,
+        imgui,
+        platform,
+        renderer,
+        font_size,
+    }
+}
 
-    let mut renderer = Renderer::init(&mut imgui, &display).expect("Failed to initialize renderer");
+#[derive(Debug)]
+pub struct RunState {
+    pub status: bool,
+    pub showing_results: bool
+}
 
-    imgui_winit_support::configure_keys(&mut imgui);
+impl System {
+    pub fn main_loop<F: FnMut(&mut bool, &mut Ui) -> RunState>(self, mut run_ui: F) {
+        let System {
+            mut events_loop,
+            display,
+            mut imgui,
+            mut platform,
+            mut renderer,
+            ..
+        } = self;
+        let gl_window = display.gl_window();
+        let window = gl_window.window();
+        let mut last_frame = Instant::now();
+        let mut run = true;
 
-    let mut last_frame = Instant::now();
-    let mut quit = false;
+        while run {
+            events_loop.poll_events(|event| {
+                platform.handle_event(imgui.io_mut(), &window, &event);
 
-    loop {
-        events_loop.poll_events(|event| {
-            use glium::glutin::{Event, WindowEvent::CloseRequested};
+                if let Event::WindowEvent { event, .. } = event {
+                    if let WindowEvent::CloseRequested = event {
+                        run = false;
+                    }
+                }
+            });
 
-            imgui_winit_support::handle_event(
-                &mut imgui,
-                &event,
-                window.get_hidpi_factor(),
-                hidpi_factor,
-            );
+            let io = imgui.io_mut();
+            platform
+                .prepare_frame(io, &window)
+                .expect("Failed to start frame");
+            last_frame = io.update_delta_time(last_frame);
+            let mut ui = imgui.frame();
+            let run_state = run_ui(&mut run, &mut ui);
 
-            if let Event::WindowEvent { event, .. } = event {
-                match event {
-                    CloseRequested => quit = true,
-                    _ => (),
+            if !run_state.status {
+                break;
+            }
+
+            if run_state.showing_results {
+                if window.get_inner_size().unwrap() == SEARCH_SIZE {
+                    window.set_inner_size(RESULTS_SIZE);
                 }
             }
-        });
-
-        let now = Instant::now();
-        let delta = now - last_frame;
-        let delta_s = delta.as_secs() as f32 + delta.subsec_nanos() as f32 / 1_000_000_000.0;
-        last_frame = now;
-
-        imgui_winit_support::update_mouse_cursor(&imgui, &window);
-
-        let frame_size = imgui_winit_support::get_frame_size(&window, hidpi_factor).unwrap();
-
-        let ui = imgui.frame(frame_size, delta_s);
-
-        let run_state = run_ui(&ui, display.get_context(), renderer.textures());
-        if !run_state.status {
-            break;
-        }
-
-        if run_state.showing_results {
-            if window.get_inner_size().unwrap() == SEARCH_SIZE {
-                window.set_inner_size(RESULTS_SIZE);
+            else if !run_state.showing_results {
+                if window.get_inner_size().unwrap() == RESULTS_SIZE {
+                    window.set_inner_size(SEARCH_SIZE);
+                }
             }
-        }
-        else if !run_state.showing_results {
-            if window.get_inner_size().unwrap() == RESULTS_SIZE {
-                window.set_inner_size(SEARCH_SIZE);
-            }
-        }
 
-        let mut target = display.draw();
-        target.clear_color(
-            clear_color[0],
-            clear_color[1],
-            clear_color[2],
-            clear_color[3],
-        );
-        renderer.render(&mut target, ui).expect("Rendering failed");
-        target.finish().unwrap();
-
-        if quit {
-            break;
+            let mut target = display.draw();
+            target.clear_color_srgb(1.0, 1.0, 1.0, 1.0);
+            platform.prepare_render(&ui, &window);
+            let draw_data = ui.render();
+            renderer
+                .render(&mut target, draw_data)
+                .expect("Rendering failed");
+            target.finish().expect("Failed to swap buffers");
         }
     }
 }

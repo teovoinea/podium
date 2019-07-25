@@ -9,11 +9,11 @@ use image::{jpeg::JPEGDecoder, ImageDecoder};
 use std::borrow::Cow;
 use std::error::Error;
 use std::io::Cursor;
+use std::rc::Rc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::process::Command;
 use std::path::Path;
 
-use super::support::Textures;
 use super::support::RunState;
 use crate::query_executor::{ QueryResponse, Response };
 
@@ -27,8 +27,8 @@ struct State {
     response: Option<QueryResponse>,
 }
 
-const SEARCH_SIZE: (f32, f32) = (680.0, 60.0);
-const RESULTS_SIZE: (f32, f32) = (680.0, 500.0);
+const SEARCH_SIZE: [f32;2] = [680.0, 60.0];
+const RESULTS_SIZE: [f32;2] = [680.0, 500.0];
 
 pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<QueryResponse>) {
     let mut state = State {
@@ -36,10 +36,12 @@ pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<Query
         icon_texture: None,
         response: None
     };
-    super::support::run("hello_world.rs".to_owned(), CLEAR_COLOR, |ui, gl_ctx, textures| {
-        if state.icon_texture.is_none() {
-            state.icon_texture = Some(Icon::new(gl_ctx, textures).unwrap());
-        }
+    let mut system = super::support::init("hello_world.rs");
+    if state.icon_texture.is_none() {
+        state.icon_texture = Some(Icon::new(system.display.get_context(), system.renderer.textures()).unwrap());
+    }
+    system.main_loop(|_, ui| {
+        
         hello_world(&mut state, ui, &query_sender, &results_receiver)
     });
 }
@@ -52,64 +54,64 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
         SEARCH_SIZE
     };
 
-    ui.with_color_var(ImGuiCol::WindowBg, WINDOW_BG, || {
-        ui.window(im_str!("Search box"))
-        .position((0.0, 0.0), ImGuiCond::Always)
-        .size(size, ImGuiCond::Always)
-        .title_bar(false)
-        .inputs(true)
-        .always_use_window_padding(false)
-        .scroll_bar(false)
-        .scrollable(false)
-        .resizable(false)
-        .movable(false)
-        .collapsible(false)
-        .build(|| {
-            if let Some(icon) = &state.icon_texture {
-                icon.show(&ui);
-            }
+    ui.push_style_color(StyleColor::WindowBg, WINDOW_BG);
 
-            ui.same_line(0.0);
-            ui.text_colored(TEXT_COLOR, im_str!("Search..."));
-            
-            ui.same_line(0.0);
-            ui.with_color_var(ImGuiCol::FrameBg, WINDOW_BG, || {
-                if ui.input_text(im_str!(""), &mut state.query)
-                    .enter_returns_true(true)
-                    .build()
-                {
-                    ui.set_keyboard_focus_here(-1);
-                    if !state.query.to_str().trim().is_empty() {
-                        dbg!(&state.query.to_str());
-                        query_sender.send(String::from(state.query.to_str()));
-                        let resp = response_receiver.recv().unwrap();
-                        dbg!(&resp);
-                        state.response = Some(resp);
-                    }
-                    else {
-                        state.response = None;
-                    }
-                }
-            });
+    ui.window(im_str!("Search box"))
+    .position([0.0, 0.0], Condition::Always)
+    .size(size, Condition::Always)
+    .title_bar(false)
+    // .inputs(true)
+    .always_use_window_padding(false)
+    .scroll_bar(false)
+    .scrollable(false)
+    .resizable(false)
+    .movable(false)
+    .collapsible(false)
+    .build(|| {
+        if let Some(icon) = &state.icon_texture {
+            icon.show(&ui);
+        }
 
-            if let Some(responses) = &state.response {
-                ui.separator();
-                ui.child_frame(im_str!("Results box"), (680.0, 440.0))
-                    .build(|| {
-                        responses.iter()
-                                .for_each(|resp| {
-                                    // let title = resp.title.clone();
-                                    let mut location = resp.location[0].to_str().unwrap();
-                                    // ui.text_colored(TEXT_COLOR, &ImString::from(title));
-                                    // ui.same_line(0.0);
-                                    if ui.button(&ImString::from(String::from(location)), (400.0, ui.get_text_line_height_with_spacing())) {
-                                        println!("Trying to open {:?}", location.clone());
-                                        opener::open(location.clone());
-                                    }
-                                });
-                    });
+        ui.same_line(0.0);
+        ui.text_colored(TEXT_COLOR, im_str!("Search..."));
+        
+        ui.same_line(0.0);
+        ui.push_style_color(StyleColor::FrameBg, WINDOW_BG);
+    
+        if ui.input_text(im_str!(""), &mut state.query)
+            .enter_returns_true(true)
+            .build()
+        {
+            // ui.set_keyboard_focus_here(-1);
+            if !state.query.to_str().trim().is_empty() {
+                dbg!(&state.query.to_str());
+                query_sender.send(String::from(state.query.to_str()));
+                let resp = response_receiver.recv().unwrap();
+                dbg!(&resp);
+                state.response = Some(resp);
             }
-        });
+            else {
+                state.response = None;
+            }
+        }
+
+        if let Some(responses) = &state.response {
+            ui.separator();
+            ui.child_frame(im_str!("Results box"), [680.0, 440.0])
+                .build(|| {
+                    responses.iter()
+                            .for_each(|resp| {
+                                // let title = resp.title.clone();
+                                let mut location = resp.location[0].to_str().unwrap();
+                                // ui.text_colored(TEXT_COLOR, &ImString::from(title));
+                                // ui.same_line(0.0);
+                                if ui.button(&ImString::from(String::from(location)), [400.0, ui.get_text_line_height_with_spacing()]) {
+                                    println!("Trying to open {:?}", location.clone());
+                                    opener::open(location.clone());
+                                }
+                            });
+                });
+        }
     });
 
 
@@ -120,12 +122,12 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
 }
 
 struct Icon {
-    texture_id: ImTexture,
-    size: (f32, f32),
+    texture_id: TextureId,
+    size: [f32; 2],
 }
 
 impl Icon {
-    fn new<F>(gl_ctx: &F, textures: &mut Textures) -> Result<Self, Box<dyn Error>>
+    fn new<F>(gl_ctx: &F, textures: &mut Textures<Rc<Texture2d>>) -> Result<Self, Box<dyn Error>>
     where
         F: Facade,
     {
@@ -142,10 +144,10 @@ impl Icon {
             format: ClientFormat::U8U8U8,
         };
         let gl_texture = Texture2d::new(gl_ctx, raw)?;
-        let texture_id = textures.insert(gl_texture);
+        let texture_id = textures.insert(Rc::new(gl_texture));
         Ok(Icon {
             texture_id,
-            size: (width as f32, height as f32),
+            size: [width as f32, height as f32],
         })
     }
 
