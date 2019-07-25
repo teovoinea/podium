@@ -40,9 +40,15 @@ pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<Query
     if state.icon_texture.is_none() {
         state.icon_texture = Some(Icon::new(system.display.get_context(), system.renderer.textures()).unwrap());
     }
-    let san_fran = system.imgui.fonts().add_font(&[FontSource::TtfData {
+    let san_fran_big = system.imgui.fonts().add_font(&[FontSource::TtfData {
             data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
             size_pixels: system.font_size * 2.0,
+            config: None,
+    }]);
+
+    let san_fran = system.imgui.fonts().add_font(&[FontSource::TtfData {
+            data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
+            size_pixels: system.font_size,
             config: None,
     }]);
     system
@@ -50,12 +56,12 @@ pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<Query
         .reload_font_texture(&mut system.imgui)
         .expect("Failed to reload fonts");
     system.main_loop(|_, ui| {
-        let _sf = ui.push_font(san_fran);
-        hello_world(&mut state, ui, &query_sender, &results_receiver)
+        let _sf_big = ui.push_font(san_fran_big);
+        hello_world(&mut state, ui, &query_sender, &results_receiver, san_fran)
     });
 }
 
-fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>, response_receiver: &Receiver<QueryResponse>) -> RunState {
+fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>, response_receiver: &Receiver<QueryResponse>, san_fran: FontId) -> RunState {
     let size = if state.response.is_some() {
         RESULTS_SIZE
     }
@@ -63,7 +69,7 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
         SEARCH_SIZE
     };
 
-    ui.push_style_color(StyleColor::WindowBg, WINDOW_BG);
+    let _window_bg = ui.push_style_color(StyleColor::WindowBg, WINDOW_BG);
 
     ui.window(im_str!("Search box"))
     .position([0.0, 0.0], Condition::Always)
@@ -85,7 +91,8 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
         ui.text_colored(TEXT_COLOR, im_str!("Search..."));
         
         ui.same_line(0.0);
-        ui.push_style_color(StyleColor::FrameBg, WINDOW_BG);
+        let _input_bg = ui.push_style_color(StyleColor::FrameBg, WINDOW_BG);
+        let _input_bg_a = ui.push_style_color(StyleColor::FrameBgActive, WINDOW_BG);
     
         if ui.input_text(im_str!(""), &mut state.query)
             .enter_returns_true(true)
@@ -106,8 +113,11 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
 
         if let Some(responses) = &state.response {
             ui.separator();
+            let _sf = ui.push_font(san_fran);
             ui.child_frame(im_str!("Results box"), [680.0, 440.0])
                 .build(|| {
+                    let _btn_style = ui.push_style_var(StyleVar::ButtonTextAlign([0.0, 1.0]));
+                    let _input_bg = ui.push_style_color(StyleColor::Button, WINDOW_BG);
                     responses.iter()
                             .for_each(|resp| {
                                 // let title = resp.title.clone();
