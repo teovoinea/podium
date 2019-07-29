@@ -1,3 +1,8 @@
+<p align="center">
+    <img src="./assets/Podium.svg">
+</p>
+
+
 # Podium
 
 Podium is a smart indexer and searcher for your files.
