@@ -17,11 +17,24 @@ Pdoium doesn't interfere with how you already organize your files, but it can he
 
 ### Supported file types
 
-| Type                     | Extensions                                       | Windows | Linux | MacOs |
-|--------------------------|--------------------------------------------------|---------|-------|-------|
+| Type                     | Extensions                                       | Windows | Linux | MacOS | 
+|--------------------------|--------------------------------------------------|---------|-------|-------|-----------------------|
 | Image - object detection | .tif, .tiff, .jpg, .jpeg, .png, .bmp, .ico, .gif | ❌       | ✅     | ✅     |
 | Image - exif metadata    | .tif,.tiff, .jpg, .jpeg                          | ✅       | ✅     | ✅     |
 | Spreadsheed              | .csv, .xlsx                                      | ✅       | ✅     | ✅     |
 | Text                     | .txt, .docx                                      | ✅       | ✅     | ✅     |
 | Slideshow                | .pptx                                            | ✅       | ✅     | ✅     |
 | PDF                      | .pdf                                             | ✅       | ✅     | ✅     |
+
+
+### Performance
+
+| File          | Type                     | Processing time (avg) | File Size |
+|---------------|--------------------------|-----------------------|-----------|
+| [Cats.pdf](https://github.com/teovoinea/podium/blob/master/test_files/Cats.pdf)      | PDF                      | 26 ms                 | 21 KB     |
+| [Cats.pptx](https://github.com/teovoinea/podium/blob/master/test_files/Cats.pptx)     | Slideshow                | 20 ms                 | 33 KB     |
+| [Cats.xslx](https://github.com/teovoinea/podium/blob/master/test_files/Cats.xlsx)     | Spreadsheet              | 263 us                | 9.2 KB    |
+| [IMG_2551.jpeg](https://github.com/teovoinea/podium/blob/master/test_files/IMG_2551.jpeg) | Image - object detection | 265 ms                | 1.7 MB    |
+| [IMG_2551.jpeg](https://github.com/teovoinea/podium/blob/master/test_files/IMG_2551.jpeg) | Image - exif metadata    | 1.48 ms               | 1.7 MB    |
+| [data.csv](https://github.com/teovoinea/podium/blob/master/test_files/data.csv)      | Spreadsheet              | 27 us                 | 379 B     |
+| [file.txt](https://github.com/teovoinea/podium/blob/master/test_files/file.txt)      | Text                     | 8.87 us               | 39 B      |
