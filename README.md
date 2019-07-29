@@ -11,7 +11,7 @@ Pdoium doesn't interfere with how you already organize your files, but it can he
 
 * **Private** - Your files and data never leave your computer
 * **Flexible** - Works on all desktop environments
-* **Fast** - Can process files at X MB/s
+* **Fast** - New files are processed in under 1 second
 * **Extensible** - Built with plugins at its core
 * **Smart** - Uses modern AI models to accurately identify the content of your files
 
@@ -20,7 +20,7 @@ Pdoium doesn't interfere with how you already organize your files, but it can he
 | Type                     | Extensions                                       | Windows | Linux | MacOS | 
 |--------------------------|--------------------------------------------------|---------|-------|-------|
 | Image - object detection | .tif, .tiff, .jpg, .jpeg, .png, .bmp, .ico, .gif | ❌       | ✅     | ✅     |
-| Image - exif metadata    | .tif,.tiff, .jpg, .jpeg                          | ✅       | ✅     | ✅     |
+| Image - exif metadata    | .tif, .tiff, .jpg, .jpeg                         | ✅       | ✅     | ✅     |
 | Spreadsheed              | .csv, .xlsx                                      | ✅       | ✅     | ✅     |
 | Text                     | .txt, .docx                                      | ✅       | ✅     | ✅     |
 | Slideshow                | .pptx                                            | ✅       | ✅     | ✅     |
