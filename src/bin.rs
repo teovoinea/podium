@@ -1,10 +1,11 @@
 use std::sync::mpsc::channel;
 use std::thread;
-use std::time::{Duration, Instant};
 
 extern crate podium_lib;
 use podium_lib::tantivy_process::start_tantivy;
 use podium_lib::ui;
+
+#[macro_use] extern crate log;
 
 fn main() {
     simple_logger::init().unwrap();
@@ -23,5 +24,7 @@ fn main() {
     // println!("It took {} microseconds to execute query", now.elapsed().as_micros());
 
     // TODO: Handle error
-    tantivy_thread.unwrap().join();
+    if let Err(_) = tantivy_thread.unwrap().join() {
+        error!("Failed to join tantivy thread");
+    }
 }

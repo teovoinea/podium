@@ -11,13 +11,10 @@ use std::error::Error;
 use std::io::Cursor;
 use std::rc::Rc;
 use std::sync::mpsc::{Receiver, Sender};
-use std::process::Command;
-use std::path::Path;
 
 use super::support::RunState;
-use crate::query_executor::{ QueryResponse, Response };
+use crate::query_executor::QueryResponse;
 
-const CLEAR_COLOR: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 const WINDOW_BG: [f32; 4] = [0.27, 0.27, 0.28, 1.0];
 const TEXT_COLOR: [f32; 4] = [0.8, 0.8, 0.81, 1.0];
 
@@ -100,10 +97,12 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
         {
             ui.set_keyboard_focus_here(FocusedWidget::Next);
             if !state.query.to_str().trim().is_empty() {
-                dbg!(&state.query.to_str());
-                query_sender.send(String::from(state.query.to_str()));
+                info!("Searching for {:?}", &state.query.to_str());
+                if let Err(_) = query_sender.send(String::from(state.query.to_str())) {
+                    error!("Failed to send search query");
+                }
                 let resp = response_receiver.recv().unwrap();
-                dbg!(&resp);
+                info!("Found results: {:?}", &resp);
                 state.response = Some(resp);
             }
             else {
@@ -121,12 +120,14 @@ fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>
                     responses.iter()
                             .for_each(|resp| {
                                 // let title = resp.title.clone();
-                                let mut location = resp.location[0].to_str().unwrap();
+                                let location = resp.location[0].to_str().unwrap();
                                 // ui.text_colored(TEXT_COLOR, &ImString::from(title));
                                 // ui.same_line(0.0);
                                 if ui.button(&ImString::from(String::from(location)), [400.0, ui.get_text_line_height_with_spacing()]) {
-                                    println!("Trying to open {:?}", location.clone());
-                                    opener::open(location.clone());
+                                    info!("Trying to open {:?}", location.clone());
+                                    if let Err(_) = opener::open(location.clone()) {
+                                        error!("Failed to open: {:?}", location.clone());
+                                    }
                                 }
                             });
                 });

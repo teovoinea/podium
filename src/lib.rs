@@ -14,7 +14,7 @@ extern crate notify;
 extern crate pdf_extract;
 extern crate regex;
 extern crate reverse_geocoder;
-#[macro_use] extern crate serde_derive;
+extern crate serde_derive;
 extern crate serde_json;
 extern crate simple_logger;
 extern crate tantivy;

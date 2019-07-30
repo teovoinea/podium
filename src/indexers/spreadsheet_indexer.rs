@@ -2,9 +2,8 @@ use super::Indexer;
 use super::DocumentSchema;
 use std::path::Path;
 use std::ffi::OsStr;
-use std::fs;
 
-use calamine::{Reader, open_workbook, Xlsx, DataType};
+use calamine::{Reader, open_workbook, Xlsx};
 
 
 pub struct SpreadsheetIndexer;

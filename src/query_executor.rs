@@ -59,6 +59,8 @@ pub fn start_reader(index: Index, reader: IndexReader, queries: Receiver<String>
                 .collect();
 
         // TODO: Handle error
-        results.send(result);
+        if let Err(_) = results.send(result) {
+                error!("Failed to send search results to UI");
+        }
     }
 }

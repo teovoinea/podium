@@ -2215,7 +2215,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "podium"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "app_dirs 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2b_simd 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -2,7 +2,6 @@ use super::Indexer;
 use super::DocumentSchema;
 use std::path::Path;
 use std::ffi::OsStr;
-use std::fs;
 
 pub struct CsvIndexer;
 

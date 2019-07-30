@@ -2,12 +2,11 @@ use super::Indexer;
 use super::DocumentSchema;
 use std::path::Path;
 use std::ffi::OsStr;
-use std::fs;
 
 use msoffice_pptx::document::PPTXDocument;
-use msoffice_pptx::pml::{ShapeGroup, Shape};
+use msoffice_pptx::pml::ShapeGroup;
 
-use msoffice_shared::drawingml::{TextBody,TextRun};
+use msoffice_shared::drawingml::TextRun;
 
 pub struct PptxIndexer;
 
@@ -20,7 +19,7 @@ impl Indexer for PptxIndexer {
         let mut total_text = String::new();
         let document = PPTXDocument::from_file(path).unwrap();
   
-        for (slide_path, slide) in &document.slide_map {
+        for (_slide_path, slide) in &document.slide_map {
             let shape_group = &(*(*slide.common_slide_data).shape_tree).shape_array;
             for s_g in shape_group {
                 if let Some(res_text) = extract_text(s_g) {

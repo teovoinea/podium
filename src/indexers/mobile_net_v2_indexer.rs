@@ -4,7 +4,7 @@ use std::path::Path;
 use std::ffi::OsStr;
 use std::io::Cursor;
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use tract_core::ndarray;
 use tract_core::prelude::*;
@@ -54,24 +54,24 @@ impl Indexer for MobileNetV2Indexer {
         let now = Instant::now();
         let t_model = MODEL.clone();
         let plan = SimplePlan::new(&t_model).unwrap();
-        // println!("It took {} microseconds to clone and build the plan", now.elapsed().as_micros());
+        info!("It took {} microseconds to clone and build the plan", now.elapsed().as_micros());
 
-        // let now = Instant::now();
+        let now = Instant::now();
         // open image, resize it and make a Tensor out of it
         let image = image::open(path).unwrap().to_rgb();
-        // println!("It took {} microseconds to load the image from disk", now.elapsed().as_micros());
-        // let now = Instant::now();
+        info!("It took {} microseconds to load the image from disk", now.elapsed().as_micros());
+        let now = Instant::now();
         let resized = image::imageops::resize(&image, 224, 224, ::image::FilterType::Triangle);
         let image: Tensor = ndarray::Array4::from_shape_fn((1, 224, 224, 3), |(_, y, x, c)| {
             resized[(x as _, y as _)][c] as f32 / 255.0
         })
         .into();
-        // println!("It took {} microseconds to pre-process the image", now.elapsed().as_micros());
+        info!("It took {} microseconds to pre-process the image", now.elapsed().as_micros());
 
         let now = Instant::now();
         // run the plan on the input
         let result = plan.run(tvec!(image)).unwrap();
-        // println!("It took {} microseconds to run the image on the plan", now.elapsed().as_micros());
+        info!("It took {} microseconds to run the image on the plan", now.elapsed().as_micros());
 
         // find and display the max value with its index
         let best = result[0]
@@ -86,8 +86,6 @@ impl Indexer for MobileNetV2Indexer {
         if let Some((_score, index)) = best {
             body_res = LABELS.get(index as usize - 1).unwrap();
         }
-
-        // dbg!(body_res);
 
         DocumentSchema {
             name: String::new(),
