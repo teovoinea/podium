@@ -48,7 +48,7 @@ pub fn get_doc_by_hash(
         if count > 1 {
             for (_score, doc_address) in top_docs {
                 let retrieved_doc = searcher.doc(doc_address).unwrap();
-                info!("{:?}", retrieved_doc);
+                error!("{:?}", retrieved_doc);
             }
             panic!("More than 1 document with the same hash!!!");
         }
@@ -77,7 +77,7 @@ pub fn get_doc_by_location(
         if top_docs.len() > 1 {
             for (_score, doc_address) in top_docs {
                 let retrieved_doc = searcher.doc(doc_address).unwrap();
-                info!("{:?}", retrieved_doc);
+                error!("{:?}", retrieved_doc);
             }
             panic!("More than 1 document with the same location!!!");
         }
@@ -128,17 +128,21 @@ pub fn delete_doc_by_hash(
 }
 
 // Calculates hash of file from Path
-pub fn get_file_hash(entry_path: &Path) -> blake2b_simd::Hash {
+pub fn get_file_hash(entry_path: &Path) -> Option<blake2b_simd::Hash> {
     let file_hash;
     {
         let mut file = fs::File::open(&entry_path).unwrap();
         let mut file_buffer = Vec::new();
         // TODO: Handle error
-        file.read_to_end(&mut file_buffer);
+        if file.read_to_end(&mut file_buffer).is_err() {
+            error!("Failed to read file bytes to buffer to calculate hash");
+            return None;
+        }
+
         file_hash = blake2b(file_buffer.as_slice());
     }
     trace!("Hash of file is: {:?}", file_hash);
-    file_hash
+    Some(file_hash)
 }
 
 // If a document with the same file hash already exists, we can avoid processing it again
@@ -191,7 +195,12 @@ pub fn process_file(
     index_reader: &IndexReader,
 ) -> Option<Document> {
     let location_facet = &entry_path.to_facet_value();
-    let file_hash = get_file_hash(entry_path);
+    let file_hash = if let Some(f_h) = get_file_hash(entry_path) {
+        f_h
+    } else {
+        return None;
+    };
+
     trace!("Hash of file is: {:?}", file_hash);
 
     // Check if the file has already been indexed
@@ -315,12 +324,12 @@ impl TantivyConvert for Path {
 }
 
 mod test {
-    use super::*;
-    use std::env;
-    use std::fs::File;
-
     #[test]
     fn test_path_facet_conversion() {
+        use super::*;
+        use std::env;
+        use std::fs::File;
+
         let mut current_dir = env::current_dir().unwrap();
         current_dir.push("Cargo.toml");
         println!("{:?}", current_dir);

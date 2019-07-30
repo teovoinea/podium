@@ -102,7 +102,12 @@ pub fn start_tantivy(
                 let entry = entry.unwrap();
                 if !entry.file_type().is_dir() {
                     let entry_path = entry.path();
-                    let file_hash = get_file_hash(entry_path);
+                    let file_hash = if let Some(f_h) = get_file_hash(entry_path) {
+                        f_h
+                    } else {
+                        continue;
+                    };
+
                     // Check if this file has been processed before at a different location
                     if let Some(doc_to_update) =
                         update_existing_file(entry_path, &schema, &reader, &file_hash)
