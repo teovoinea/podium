@@ -1,10 +1,10 @@
-use imgui::*;
 use glium::{
     backend::Facade,
     texture::{ClientFormat, RawImage2d},
     Texture2d,
 };
 use image::{jpeg::JPEGDecoder, ImageDecoder};
+use imgui::*;
 
 use std::borrow::Cow;
 use std::error::Error;
@@ -24,29 +24,30 @@ struct State {
     response: Option<QueryResponse>,
 }
 
-const SEARCH_SIZE: [f32;2] = [680.0, 60.0];
-const RESULTS_SIZE: [f32;2] = [680.0, 500.0];
+const SEARCH_SIZE: [f32; 2] = [680.0, 60.0];
+const RESULTS_SIZE: [f32; 2] = [680.0, 500.0];
 
 pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<QueryResponse>) {
     let mut state = State {
         query: ImString::with_capacity(128),
         icon_texture: None,
-        response: None
+        response: None,
     };
     let mut system = super::support::init("hello_world.rs");
     if state.icon_texture.is_none() {
-        state.icon_texture = Some(Icon::new(system.display.get_context(), system.renderer.textures()).unwrap());
+        state.icon_texture =
+            Some(Icon::new(system.display.get_context(), system.renderer.textures()).unwrap());
     }
     let san_fran_big = system.imgui.fonts().add_font(&[FontSource::TtfData {
-            data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
-            size_pixels: system.font_size * 2.0,
-            config: None,
+        data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
+        size_pixels: system.font_size * 2.0,
+        config: None,
     }]);
 
     let san_fran = system.imgui.fonts().add_font(&[FontSource::TtfData {
-            data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
-            size_pixels: system.font_size,
-            config: None,
+        data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
+        size_pixels: system.font_size,
+        config: None,
     }]);
     system
         .renderer
@@ -58,86 +59,92 @@ pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<Query
     });
 }
 
-fn hello_world<'a>(state: &mut State, ui: &Ui<'a>, query_sender: &Sender<String>, response_receiver: &Receiver<QueryResponse>, san_fran: FontId) -> RunState {
+fn hello_world<'a>(
+    state: &mut State,
+    ui: &Ui<'a>,
+    query_sender: &Sender<String>,
+    response_receiver: &Receiver<QueryResponse>,
+    san_fran: FontId,
+) -> RunState {
     let size = if state.response.is_some() {
         RESULTS_SIZE
-    }
-    else {
+    } else {
         SEARCH_SIZE
     };
 
     let _window_bg = ui.push_style_color(StyleColor::WindowBg, WINDOW_BG);
 
     ui.window(im_str!("Search box"))
-    .position([0.0, 0.0], Condition::Always)
-    .size(size, Condition::Always)
-    .title_bar(false)
-    // .inputs(true)
-    .always_use_window_padding(false)
-    .scroll_bar(false)
-    .scrollable(false)
-    .resizable(false)
-    .movable(false)
-    .collapsible(false)
-    .build(|| {
-        if let Some(icon) = &state.icon_texture {
-            icon.show(&ui);
-        }
+        .position([0.0, 0.0], Condition::Always)
+        .size(size, Condition::Always)
+        .title_bar(false)
+        // .inputs(true)
+        .always_use_window_padding(false)
+        .scroll_bar(false)
+        .scrollable(false)
+        .resizable(false)
+        .movable(false)
+        .collapsible(false)
+        .build(|| {
+            if let Some(icon) = &state.icon_texture {
+                icon.show(&ui);
+            }
 
-        ui.same_line(0.0);
-        ui.text_colored(TEXT_COLOR, im_str!("Search..."));
-        
-        ui.same_line(0.0);
-        let _input_bg = ui.push_style_color(StyleColor::FrameBg, WINDOW_BG);
-        let _input_bg_a = ui.push_style_color(StyleColor::FrameBgActive, WINDOW_BG);
-    
-        if ui.input_text(im_str!(""), &mut state.query)
-            .enter_returns_true(true)
-            .build()
-        {
-            ui.set_keyboard_focus_here(FocusedWidget::Next);
-            if !state.query.to_str().trim().is_empty() {
-                info!("Searching for {:?}", &state.query.to_str());
-                if let Err(_) = query_sender.send(String::from(state.query.to_str())) {
-                    error!("Failed to send search query");
+            ui.same_line(0.0);
+            ui.text_colored(TEXT_COLOR, im_str!("Search..."));
+
+            ui.same_line(0.0);
+            let _input_bg = ui.push_style_color(StyleColor::FrameBg, WINDOW_BG);
+            let _input_bg_a = ui.push_style_color(StyleColor::FrameBgActive, WINDOW_BG);
+
+            if ui
+                .input_text(im_str!(""), &mut state.query)
+                .enter_returns_true(true)
+                .build()
+            {
+                ui.set_keyboard_focus_here(FocusedWidget::Next);
+                if !state.query.to_str().trim().is_empty() {
+                    info!("Searching for {:?}", &state.query.to_str());
+                    if query_sender
+                        .send(String::from(state.query.to_str()))
+                        .is_err()
+                    {
+                        error!("Failed to send search query");
+                    }
+                    let resp = response_receiver.recv().unwrap();
+                    info!("Found results: {:?}", &resp);
+                    state.response = Some(resp);
+                } else {
+                    state.response = None;
                 }
-                let resp = response_receiver.recv().unwrap();
-                info!("Found results: {:?}", &resp);
-                state.response = Some(resp);
             }
-            else {
-                state.response = None;
-            }
-        }
 
-        if let Some(responses) = &state.response {
-            ui.separator();
-            let _sf = ui.push_font(san_fran);
-            ui.child_frame(im_str!("Results box"), [680.0, 440.0])
-                .build(|| {
-                    let _btn_style = ui.push_style_var(StyleVar::ButtonTextAlign([0.0, 1.0]));
-                    let _input_bg = ui.push_style_color(StyleColor::Button, WINDOW_BG);
-                    responses.iter()
-                            .for_each(|resp| {
-                                // let title = resp.title.clone();
-                                let location = resp.location[0].to_str().unwrap();
-                                // ui.text_colored(TEXT_COLOR, &ImString::from(title));
-                                // ui.same_line(0.0);
-                                if ui.button(&ImString::from(String::from(location)), [400.0, ui.get_text_line_height_with_spacing()]) {
-                                    info!("Trying to open {:?}", location.clone());
-                                    if let Err(_) = opener::open(location.clone()) {
-                                        error!("Failed to open: {:?}", location.clone());
-                                    }
+            if let Some(responses) = &state.response {
+                ui.separator();
+                let _sf = ui.push_font(san_fran);
+                ui.child_frame(im_str!("Results box"), [680.0, 440.0])
+                    .build(|| {
+                        let _btn_style = ui.push_style_var(StyleVar::ButtonTextAlign([0.0, 1.0]));
+                        let _input_bg = ui.push_style_color(StyleColor::Button, WINDOW_BG);
+                        responses.iter().for_each(|resp| {
+                            let location = resp.location[0].to_str().unwrap();
+                            if ui.button(
+                                &ImString::from(String::from(location)),
+                                [400.0, ui.get_text_line_height_with_spacing()],
+                            ) {
+                                info!("Trying to open {:?}", location);
+                                if opener::open(location).is_err() {
+                                    error!("Failed to open: {:?}", location);
                                 }
-                            });
-                });
-        }
-    });
-
+                            }
+                        });
+                    });
+            }
+        });
 
     RunState {
         status: true,
-        showing_results: state.response.is_some()
+        showing_results: state.response.is_some(),
     }
 }
 

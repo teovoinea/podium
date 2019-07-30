@@ -1,41 +1,50 @@
 use crate::indexers::*;
 
-use tantivy::schema::*;
-use tantivy::IndexReader;
-use tantivy::DocAddress;
-use tantivy::query::TermQuery;
 use tantivy::collector::{Count, TopDocs};
+use tantivy::query::TermQuery;
+use tantivy::schema::*;
+use tantivy::DocAddress;
+use tantivy::IndexReader;
 
 use blake2b_simd::blake2b;
 
-use std::sync::mpsc::*;
 use std::fs;
-use std::path::{Path, PathBuf};
 use std::io::Read;
+use std::path::{Path, PathBuf};
+use std::sync::mpsc::*;
 
 pub enum WriterAction {
     Add(Document),
-    Delete(Term)
+    Delete(Term),
 }
 
 pub fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
-    (schema.get_field("title").unwrap(), schema.get_field("hash").unwrap(),
-    schema.get_field("location").unwrap(), schema.get_field("body").unwrap())
+    (
+        schema.get_field("title").unwrap(),
+        schema.get_field("hash").unwrap(),
+        schema.get_field("location").unwrap(),
+        schema.get_field("body").unwrap(),
+    )
 }
 
 // Gets the `DocAddress` of a file based on the hash
-pub fn get_doc_by_hash(index_reader: &IndexReader, hash_field: Field, hash: &str) -> Option<DocAddress> {
+pub fn get_doc_by_hash(
+    index_reader: &IndexReader,
+    hash_field: Field,
+    hash: &str,
+) -> Option<DocAddress> {
     let searcher = index_reader.searcher();
     let query = TermQuery::new(
-            Term::from_field_text(hash_field, hash),
-            IndexRecordOption::Basic,
+        Term::from_field_text(hash_field, hash),
+        IndexRecordOption::Basic,
     );
-    let (top_docs, count) = searcher.search(&query, &(TopDocs::with_limit(1), Count)).unwrap();
+    let (top_docs, count) = searcher
+        .search(&query, &(TopDocs::with_limit(1), Count))
+        .unwrap();
     if count == 1 {
         let (_score, address) = top_docs[0];
         Some(address)
-    }
-    else {
+    } else {
         if count > 1 {
             for (_score, doc_address) in top_docs {
                 let retrieved_doc = searcher.doc(doc_address).unwrap();
@@ -48,18 +57,23 @@ pub fn get_doc_by_hash(index_reader: &IndexReader, hash_field: Field, hash: &str
 }
 
 // Gets the `DocAddress` of a file based on the file location
-pub fn get_doc_by_location(index_reader: &IndexReader, location_field: Field, location_facet: &Facet) -> Option<DocAddress> {
+pub fn get_doc_by_location(
+    index_reader: &IndexReader,
+    location_field: Field,
+    location_facet: &Facet,
+) -> Option<DocAddress> {
     let searcher = index_reader.searcher();
     let query = TermQuery::new(
         Term::from_facet(location_field, location_facet),
-            IndexRecordOption::Basic,
+        IndexRecordOption::Basic,
     );
-    let (top_docs, _count) = searcher.search(&query, &(TopDocs::with_limit(1), Count)).unwrap();
+    let (top_docs, _count) = searcher
+        .search(&query, &(TopDocs::with_limit(1), Count))
+        .unwrap();
     if top_docs.len() == 1 {
         let (_score, address) = top_docs[0];
         Some(address)
-    }
-    else {
+    } else {
         if top_docs.len() > 1 {
             for (_score, doc_address) in top_docs {
                 let retrieved_doc = searcher.doc(doc_address).unwrap();
@@ -72,31 +86,43 @@ pub fn get_doc_by_location(index_reader: &IndexReader, location_field: Field, lo
 }
 
 // Find `DocAddress` by file location, delete the document and return its contents
-pub fn delete_doc_by_location(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, location_field: Field, location_facet: &Facet) -> Option<Document> {
+pub fn delete_doc_by_location(
+    index_reader: &IndexReader,
+    index_writer: &Sender<WriterAction>,
+    location_field: Field,
+    location_facet: &Facet,
+) -> Option<Document> {
     if let Some(old_address) = get_doc_by_location(index_reader, location_field, location_facet) {
         let searcher = index_reader.searcher();
         let location_term = Term::from_facet(location_field, location_facet);
         let old_document = Some(searcher.doc(old_address).unwrap());
-        index_writer.send(WriterAction::Delete(location_term)).unwrap();
+        index_writer
+            .send(WriterAction::Delete(location_term))
+            .unwrap();
         info!("Deleting document by location: {:?}", old_document);
         old_document
-    }
-    else {
+    } else {
         None
     }
 }
 
 // Find `DocAddress` by file hash, delete the document and return its contents
-pub fn delete_doc_by_hash(index_reader: &IndexReader, index_writer: &Sender<WriterAction>, hash_field: Field, hash: &str) -> Option<Document> {
+pub fn delete_doc_by_hash(
+    index_reader: &IndexReader,
+    index_writer: &Sender<WriterAction>,
+    hash_field: Field,
+    hash: &str,
+) -> Option<Document> {
     if let Some(old_address) = get_doc_by_hash(index_reader, hash_field, hash) {
         let searcher = index_reader.searcher();
         let location_term = Term::from_field_text(hash_field, hash);
         let old_document = Some(searcher.doc(old_address).unwrap());
-        index_writer.send(WriterAction::Delete(location_term)).unwrap();
+        index_writer
+            .send(WriterAction::Delete(location_term))
+            .unwrap();
         info!("Deleting document by hash: {:?}", old_document);
         old_document
-    }
-    else {
+    } else {
         None
     }
 }
@@ -121,46 +147,70 @@ pub fn get_file_hash(entry_path: &Path) -> blake2b_simd::Hash {
 // A is indexed and exists at /path/to/A
 // We will see B has the same hash as A
 // Instead of reprocessing B, we add /path/to/B to the list of locations
-pub fn update_existing_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader, hash: &blake2b_simd::Hash) -> Option<Document> {
+pub fn update_existing_file(
+    entry_path: &Path,
+    schema: &Schema,
+    index_reader: &IndexReader,
+    hash: &blake2b_simd::Hash,
+) -> Option<Document> {
     let searcher = index_reader.searcher();
     let location_facet = &entry_path.to_facet_value();
     let (_title, hash_field, location, _body) = destructure_schema(schema);
     if let Some(doc_address) = get_doc_by_hash(index_reader, hash_field, hash.to_hex().as_str()) {
         info!("We've seen this file before! {:?}", location_facet);
         let mut retrieved_doc = searcher.doc(doc_address).unwrap();
-        info!("Is this current file's location already in the document? {:?}", !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))));
-        if !retrieved_doc.get_all(location).contains(&&Value::from(Facet::from_text(location_facet))) {
+        info!(
+            "Is this current file's location already in the document? {:?}",
+            !retrieved_doc
+                .get_all(location)
+                .contains(&&Value::from(Facet::from_text(location_facet)))
+        );
+        if !retrieved_doc
+            .get_all(location)
+            .contains(&&Value::from(Facet::from_text(location_facet)))
+        {
             // If this location of the file isn't already stored in the document, add it
             retrieved_doc.add_facet(location, location_facet);
-            info!("The new document with the added location is: {:?}", retrieved_doc);
-            return Some(retrieved_doc)
+            info!(
+                "The new document with the added location is: {:?}",
+                retrieved_doc
+            );
+            return Some(retrieved_doc);
         }
         // Otherwise, we can ignore
-        return None
+        return None;
     }
     None
 }
 
 // Processes a file by running all available indexers on it
 // Updates an existing entry if necessary
-pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexReader) -> Option<Document> {
+pub fn process_file(
+    entry_path: &Path,
+    schema: &Schema,
+    index_reader: &IndexReader,
+) -> Option<Document> {
     let location_facet = &entry_path.to_facet_value();
     let file_hash = get_file_hash(entry_path);
     trace!("Hash of file is: {:?}", file_hash);
 
     // Check if the file has already been indexed
     if let Some(doc) = update_existing_file(entry_path, &schema, &index_reader, &file_hash) {
-        return Some(doc)
+        return Some(doc);
     }
 
     let analyzer = get_analyzer();
 
     // We're indexing the file for the first time
     let results = analyzer.analyze(entry_path.extension().unwrap(), entry_path);
-    if results.len() > 0 {
+    if !results.is_empty() {
         info!("This is a new file, we need to process it");
         let title = &results[0].name;
-        let body = results.iter().fold(String::new(), |mut acc, x| { acc.push_str(&x.body); acc.push_str(" "); acc });
+        let body = results.iter().fold(String::new(), |mut acc, x| {
+            acc.push_str(&x.body);
+            acc.push_str(" ");
+            acc
+        });
         info!("{:?} {:?}", title, body);
 
         let (title_field, hash_field, location_field, body_field) = destructure_schema(schema);
@@ -170,10 +220,12 @@ pub fn process_file(entry_path: &Path, schema: &Schema, index_reader: &IndexRead
         new_doc.add_facet(location_field, location_facet);
         new_doc.add_text(hash_field, file_hash.to_hex().as_str());
         new_doc.add_text(body_field, &body);
-        return Some(new_doc)
-    }
-    else {
-        info!("Couldn't find any indexers for file with extension: {}", entry_path.extension().unwrap().to_str().unwrap());
+        return Some(new_doc);
+    } else {
+        info!(
+            "Couldn't find any indexers for file with extension: {}",
+            entry_path.extension().unwrap().to_str().unwrap()
+        );
     }
 
     None
@@ -197,25 +249,29 @@ pub fn build_schema() -> Schema {
 #[cfg(not(target_os = "windows"))]
 fn get_analyzer() -> Analyzer {
     Analyzer {
-        indexers: vec![Box::new(TextIndexer),
-                        Box::new(ExifIndexer),
-                        Box::new(PdfIndexer),
-                        Box::new(MobileNetV2Indexer),
-                        Box::new(PptxIndexer),
-                        Box::new(CsvIndexer),
-                        Box::new(SpreadsheetIndexer)]
+        indexers: vec![
+            Box::new(TextIndexer),
+            Box::new(ExifIndexer),
+            Box::new(PdfIndexer),
+            Box::new(MobileNetV2Indexer),
+            Box::new(PptxIndexer),
+            Box::new(CsvIndexer),
+            Box::new(SpreadsheetIndexer),
+        ],
     }
 }
 
 #[cfg(target_os = "windows")]
 fn get_analyzer() -> Analyzer {
     Analyzer {
-        indexers: vec![Box::new(TextIndexer),
-                        Box::new(ExifIndexer),
-                        Box::new(PdfIndexer),
-                        Box::new(PptxIndexer),
-                        Box::new(CsvIndexer),
-                        Box::new(SpreadsheetIndexer)]
+        indexers: vec![
+            Box::new(TextIndexer),
+            Box::new(ExifIndexer),
+            Box::new(PdfIndexer),
+            Box::new(PptxIndexer),
+            Box::new(CsvIndexer),
+            Box::new(SpreadsheetIndexer),
+        ],
     }
 }
 
@@ -227,7 +283,11 @@ pub trait TantivyConvert {
 impl TantivyConvert for Path {
     #[cfg(target_os = "windows")]
     fn to_facet_value(&self) -> String {
-        self.canonicalize().unwrap().to_str().unwrap().replace("\\", "/")
+        self.canonicalize()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .replace("\\", "/")
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -238,10 +298,12 @@ impl TantivyConvert for Path {
     #[cfg(target_os = "windows")]
     fn from_facet_value(facet_val: &Facet) -> PathBuf {
         Path::new(
-                    &facet_val.encoded_str()
-                            .replace(char::from(0), "/")
-                            .replacen("/?/", "", 1)
-                ).to_path_buf()
+            &facet_val
+                .encoded_str()
+                .replace(char::from(0), "/")
+                .replacen("/?/", "", 1),
+        )
+        .to_path_buf()
     }
 
     #[cfg(not(target_os = "windows"))]

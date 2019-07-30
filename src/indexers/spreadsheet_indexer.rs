@@ -1,10 +1,9 @@
-use super::Indexer;
 use super::DocumentSchema;
-use std::path::Path;
+use super::Indexer;
 use std::ffi::OsStr;
+use std::path::Path;
 
-use calamine::{Reader, open_workbook, Xlsx};
-
+use calamine::{open_workbook, Reader, Xlsx};
 
 pub struct SpreadsheetIndexer;
 
@@ -18,18 +17,24 @@ impl Indexer for SpreadsheetIndexer {
         let mut workbook: Xlsx<_> = open_workbook(path).expect("Cannot open file");
         let sheet_names = workbook.sheet_names().to_vec();
 
-        let strings = sheet_names.iter()
-                    .filter_map(|sheet_name| workbook.worksheet_range(sheet_name))
-                    .filter_map(Result::ok)
-                    .map(|range| {
-                        range.used_cells()
-                            .filter(|(_, _, cell)| cell.is_string())
-                            .filter_map(|(_, _, cell)| cell.get_string())
-                            .map(|val| val.to_string())
-                            .collect::<Vec<String>>()
-                    })
-                    .flatten()
-                    .fold(String::new(), |mut acc, x| { acc.push_str(&x); acc.push_str(" "); acc });
+        let strings = sheet_names
+            .iter()
+            .filter_map(|sheet_name| workbook.worksheet_range(sheet_name))
+            .filter_map(Result::ok)
+            .map(|range| {
+                range
+                    .used_cells()
+                    .filter(|(_, _, cell)| cell.is_string())
+                    .filter_map(|(_, _, cell)| cell.get_string())
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<String>>()
+            })
+            .flatten()
+            .fold(String::new(), |mut acc, x| {
+                acc.push_str(&x);
+                acc.push_str(" ");
+                acc
+            });
 
         DocumentSchema {
             name: String::new(),
@@ -53,7 +58,13 @@ mod tests {
 
     #[test]
     fn test_supports_spreadsheet_extension() {
-        assert_eq!(true, SpreadsheetIndexer.supports_extension(OsStr::new("xlsx")));
-        assert_eq!(false, SpreadsheetIndexer.supports_extension(OsStr::new("xls"))); // not yet..
+        assert_eq!(
+            true,
+            SpreadsheetIndexer.supports_extension(OsStr::new("xlsx"))
+        );
+        assert_eq!(
+            false,
+            SpreadsheetIndexer.supports_extension(OsStr::new("xls"))
+        ); // not yet..
     }
 }

@@ -8,12 +8,12 @@ use winit::dpi::LogicalSize;
 
 const SEARCH_SIZE: LogicalSize = LogicalSize {
     width: 680f64,
-    height: 60f64
+    height: 60f64,
 };
 
 const RESULTS_SIZE: LogicalSize = LogicalSize {
     width: 680f64,
-    height: 500f64
+    height: 500f64,
 };
 
 pub struct System {
@@ -54,14 +54,12 @@ pub fn init(title: &str) -> System {
 
     let hidpi_factor = platform.hidpi_factor();
     let font_size = (13.0 * hidpi_factor) as f32;
-    imgui.fonts().add_font(&[
-        FontSource::DefaultFontData {
-            config: Some(FontConfig {
-                size_pixels: font_size,
-                ..FontConfig::default()
-            }),
-        },
-    ]);
+    imgui.fonts().add_font(&[FontSource::DefaultFontData {
+        config: Some(FontConfig {
+            size_pixels: font_size,
+            ..FontConfig::default()
+        }),
+    }]);
 
     imgui.io_mut().font_global_scale = (1.0 / hidpi_factor) as f32;
 
@@ -80,7 +78,7 @@ pub fn init(title: &str) -> System {
 #[derive(Debug)]
 pub struct RunState {
     pub status: bool,
-    pub showing_results: bool
+    pub showing_results: bool,
 }
 
 impl System {
@@ -125,11 +123,9 @@ impl System {
                 if window.get_inner_size().unwrap() == SEARCH_SIZE {
                     window.set_inner_size(RESULTS_SIZE);
                 }
-            }
-            else if !run_state.showing_results {
-                if window.get_inner_size().unwrap() == RESULTS_SIZE {
-                    window.set_inner_size(SEARCH_SIZE);
-                }
+            } else if !run_state.showing_results && window.get_inner_size().unwrap() == RESULTS_SIZE
+            {
+                window.set_inner_size(SEARCH_SIZE);
             }
 
             let mut target = display.draw();

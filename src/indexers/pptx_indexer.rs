@@ -1,7 +1,7 @@
-use super::Indexer;
 use super::DocumentSchema;
-use std::path::Path;
+use super::Indexer;
 use std::ffi::OsStr;
+use std::path::Path;
 
 use msoffice_pptx::document::PPTXDocument;
 use msoffice_pptx::pml::ShapeGroup;
@@ -18,8 +18,8 @@ impl Indexer for PptxIndexer {
     fn index_file(&self, path: &Path) -> DocumentSchema {
         let mut total_text = String::new();
         let document = PPTXDocument::from_file(path).unwrap();
-  
-        for (_slide_path, slide) in &document.slide_map {
+
+        for slide in document.slide_map.values() {
             let shape_group = &(*(*slide.common_slide_data).shape_tree).shape_array;
             for s_g in shape_group {
                 if let Some(res_text) = extract_text(s_g) {
@@ -42,36 +42,35 @@ fn extract_text(shape_group: &ShapeGroup) -> Option<String> {
             if let Some(text_body) = &shape.text_body {
                 for paragraph in &text_body.paragraph_array {
                     for text_run in &paragraph.text_run_list {
-                        match text_run {
-                            TextRun::RegularTextRun(regular_text_run) => {
-                                total_text.push_str(&regular_text_run.text);
-                                total_text.push_str(" ");
-                            },
-                            _ => {}
+                        if let TextRun::RegularTextRun(regular_text_run) = text_run {
+                            total_text.push_str(&regular_text_run.text);
+                            total_text.push_str(" ");
                         }
                     }
                 }
             }
-        },
+        }
         ShapeGroup::GroupShape(group_shape) => {
             let res_text = group_shape
                 .shape_array
                 .iter()
                 .map(|s_g| extract_text(s_g))
                 .filter_map(|r_t| r_t)
-                .fold(String::new(), |mut acc, x| { acc.push_str(&x); acc.push_str(" "); acc });
+                .fold(String::new(), |mut acc, x| {
+                    acc.push_str(&x);
+                    acc.push_str(" ");
+                    acc
+                });
 
             total_text.push_str(&res_text);
-        },
+        }
         _ => {}
     }
     if total_text != String::new() {
         Some(total_text)
-    }
-    else {
+    } else {
         None
     }
-
 }
 
 #[cfg(test)]

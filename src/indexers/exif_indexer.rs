@@ -1,13 +1,10 @@
-use super::Indexer;
 use super::DocumentSchema;
-use std::path::Path;
+use super::Indexer;
+use exif::{Rational, Tag, Value};
 use std::ffi::OsStr;
-use exif::{Tag, Value, Rational};
+use std::path::Path;
 
-use reverse_geocoder::{
-    Locations,
-    ReverseGeocoder,
-};
+use reverse_geocoder::{Locations, ReverseGeocoder};
 
 lazy_static! {
     static ref LOCATIONS: Locations = Locations::from_memory();
@@ -18,16 +15,15 @@ pub struct ExifIndexer;
 
 impl Indexer for ExifIndexer {
     fn supports_extension(&self, extension: &OsStr) -> bool {
-        extension == OsStr::new("tif") ||
-        extension == OsStr::new("tiff") ||
-        extension == OsStr::new("jpg") ||
-        extension == OsStr::new("jpeg")
+        extension == OsStr::new("tif")
+            || extension == OsStr::new("tiff")
+            || extension == OsStr::new("jpg")
+            || extension == OsStr::new("jpeg")
     }
 
     fn index_file(&self, path: &Path) -> DocumentSchema {
         let file = std::fs::File::open(path).unwrap();
-        let reader = exif::Reader::new(
-            &mut std::io::BufReader::new(&file)).unwrap();
+        let reader = exif::Reader::new(&mut std::io::BufReader::new(&file)).unwrap();
         let mut lat_direction = 0_u8 as char;
         let mut lat = 0.0;
         let mut lon_direction = 0_u8 as char;
@@ -38,43 +34,43 @@ impl Indexer for ExifIndexer {
                     if let Value::Ascii(val) = &f.value {
                         lat_direction = val[0][0] as char;
                     }
-                },
+                }
                 Tag::GPSLatitude => {
                     if let Value::Rational(val) = &f.value {
                         lat = value_to_deg(val);
                     }
-                },
+                }
                 Tag::GPSLongitudeRef => {
                     if let Value::Ascii(val) = &f.value {
                         lon_direction = val[0][0] as char;
                     }
-                },
+                }
                 Tag::GPSLongitude => {
                     if let Value::Rational(val) = &f.value {
                         lon = value_to_deg(val);
                     }
-                },
+                }
                 _ => {}
             }
         }
 
         if lat_direction != 'N' {
-            lat = lat * -1.0;
+            lat *= -1.0;
         }
 
         if lon_direction != 'E' {
-            lon = lon * -1.0;
+            lon *= -1.0;
         }
-        
+
         let res = GEOCODER.search(&[lat, lon]).unwrap().get(0).unwrap().1;
         DocumentSchema {
             name: String::new(),
-            body: format!("{} {} {} {}", res.name, res.admin1, res.admin2, res.admin3)
+            body: format!("{} {} {} {}", res.name, res.admin1, res.admin2, res.admin3),
         }
     }
 }
 
-fn value_to_deg(val: &Vec<Rational>) -> f64 {
+fn value_to_deg(val: &[Rational]) -> f64 {
     def_to_dec_dec(val[0].to_f64(), val[1].to_f64(), val[2].to_f64())
 }
 

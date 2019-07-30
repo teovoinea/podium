@@ -1,7 +1,7 @@
-use super::Indexer;
 use super::DocumentSchema;
-use std::path::Path;
+use super::Indexer;
 use std::ffi::OsStr;
+use std::path::Path;
 
 pub struct CsvIndexer;
 
@@ -14,16 +14,19 @@ impl Indexer for CsvIndexer {
         let mut reader = csv::Reader::from_path(path).unwrap();
         if reader.has_headers() {
             let headers = reader
-                            .headers()
-                            .unwrap()
-                            .iter()
-                            .fold(String::new(), |mut acc, x| { acc.push_str(&x); acc.push_str(" "); acc });
+                .headers()
+                .unwrap()
+                .iter()
+                .fold(String::new(), |mut acc, x| {
+                    acc.push_str(&x);
+                    acc.push_str(" ");
+                    acc
+                });
             DocumentSchema {
                 name: String::new(),
-                body: headers
+                body: headers,
             }
-        }
-        else {
+        } else {
             DocumentSchema {
                 name: String::new(),
                 body: String::new(),
@@ -42,7 +45,10 @@ mod tests {
         let indexed_document = CsvIndexer.index_file(test_file_path);
 
         assert_eq!(indexed_document.name, "");
-        assert_eq!(indexed_document.body, "first_name last_name street city state postal_code ");
+        assert_eq!(
+            indexed_document.body,
+            "first_name last_name street city state postal_code "
+        );
     }
 
     #[test]

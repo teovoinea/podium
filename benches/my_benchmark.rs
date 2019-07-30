@@ -1,12 +1,11 @@
-
 #[macro_use]
 extern crate criterion;
 extern crate podium_lib;
 
 use podium_lib::indexers::*;
 
-use criterion::Criterion;
 use criterion::black_box;
+use criterion::Criterion;
 
 use std::path::Path;
 
@@ -75,24 +74,28 @@ fn bench_indexing_text_file(c: &mut Criterion) {
 }
 
 #[cfg(not(target_os = "windows"))]
-criterion_group!(benches,
-                bench_indexing_csv_file,
-                bench_indexing_exif_file,
-                bench_indexing_mobile_net_v2_file,
-                bench_indexing_pdf_file,
-                bench_indexing_exif_file,
-                bench_indexing_pptx_file,
-                bench_indexing_spreadsheet_file,
-                bench_indexing_text_file,);
+criterion_group!(
+    benches,
+    bench_indexing_csv_file,
+    bench_indexing_exif_file,
+    bench_indexing_mobile_net_v2_file,
+    bench_indexing_pdf_file,
+    bench_indexing_exif_file,
+    bench_indexing_pptx_file,
+    bench_indexing_spreadsheet_file,
+    bench_indexing_text_file,
+);
 
 #[cfg(target_os = "windows")]
-criterion_group!(benches,
-                bench_indexing_csv_file,
-                bench_indexing_exif_file,
-                bench_indexing_pdf_file,
-                bench_indexing_exif_file,
-                bench_indexing_pptx_file,
-                bench_indexing_spreadsheet_file,
-                bench_indexing_text_file,);
-                
+criterion_group!(
+    benches,
+    bench_indexing_csv_file,
+    bench_indexing_exif_file,
+    bench_indexing_pdf_file,
+    bench_indexing_exif_file,
+    bench_indexing_pptx_file,
+    bench_indexing_spreadsheet_file,
+    bench_indexing_text_file,
+);
+
 criterion_main!(benches);

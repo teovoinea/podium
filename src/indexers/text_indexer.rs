@@ -1,9 +1,8 @@
-use super::Indexer;
 use super::DocumentSchema;
-use std::path::Path;
+use super::Indexer;
 use std::ffi::OsStr;
 use std::fs;
-
+use std::path::Path;
 
 pub struct TextIndexer;
 
@@ -14,7 +13,12 @@ impl Indexer for TextIndexer {
 
     fn index_file(&self, path: &Path) -> DocumentSchema {
         DocumentSchema {
-            name: path.file_name().unwrap().to_os_string().into_string().unwrap(),
+            name: path
+                .file_name()
+                .unwrap()
+                .to_os_string()
+                .into_string()
+                .unwrap(),
             body: fs::read_to_string(path).unwrap(),
         }
     }
@@ -30,7 +34,10 @@ mod tests {
         let indexed_document = TextIndexer.index_file(test_file_path);
 
         assert_eq!(indexed_document.name, "file.txt");
-        assert_eq!(indexed_document.body, "this is a file with some contents in it");
+        assert_eq!(
+            indexed_document.body,
+            "this is a file with some contents in it"
+        );
     }
 
     #[test]

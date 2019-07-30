@@ -1,8 +1,8 @@
-use super::Indexer;
 use super::DocumentSchema;
-use std::path::Path;
+use super::Indexer;
 use std::ffi::OsStr;
 use std::io::Cursor;
+use std::path::Path;
 
 use std::time::Instant;
 
@@ -39,14 +39,14 @@ pub struct MobileNetV2Indexer;
 impl Indexer for MobileNetV2Indexer {
     // https://github.com/image-rs/image#21-supported-image-formats
     fn supports_extension(&self, extension: &OsStr) -> bool {
-        extension == OsStr::new("tif") ||
-        extension == OsStr::new("tiff") ||
-        extension == OsStr::new("jpg") ||
-        extension == OsStr::new("jpeg") ||
-        extension == OsStr::new("png") ||
-        extension == OsStr::new("bmp") ||
-        extension == OsStr::new("ico") ||
-        extension == OsStr::new("gif")
+        extension == OsStr::new("tif")
+            || extension == OsStr::new("tiff")
+            || extension == OsStr::new("jpg")
+            || extension == OsStr::new("jpeg")
+            || extension == OsStr::new("png")
+            || extension == OsStr::new("bmp")
+            || extension == OsStr::new("ico")
+            || extension == OsStr::new("gif")
     }
 
     // https://github.com/snipsco/tract/tree/master/examples/tensorflow-mobilenet-v2
@@ -54,33 +54,46 @@ impl Indexer for MobileNetV2Indexer {
         let now = Instant::now();
         let t_model = MODEL.clone();
         let plan = SimplePlan::new(&t_model).unwrap();
-        info!("It took {} microseconds to clone and build the plan", now.elapsed().as_micros());
+        info!(
+            "It took {} microseconds to clone and build the plan",
+            now.elapsed().as_micros()
+        );
 
         let now = Instant::now();
         // open image, resize it and make a Tensor out of it
         let image = image::open(path).unwrap().to_rgb();
-        info!("It took {} microseconds to load the image from disk", now.elapsed().as_micros());
+        info!(
+            "It took {} microseconds to load the image from disk",
+            now.elapsed().as_micros()
+        );
         let now = Instant::now();
         let resized = image::imageops::resize(&image, 224, 224, ::image::FilterType::Triangle);
         let image: Tensor = ndarray::Array4::from_shape_fn((1, 224, 224, 3), |(_, y, x, c)| {
-            resized[(x as _, y as _)][c] as f32 / 255.0
+            f32::from(resized[(x as _, y as _)][c]) / 255.0
         })
         .into();
-        info!("It took {} microseconds to pre-process the image", now.elapsed().as_micros());
+        info!(
+            "It took {} microseconds to pre-process the image",
+            now.elapsed().as_micros()
+        );
 
         let now = Instant::now();
         // run the plan on the input
         let result = plan.run(tvec!(image)).unwrap();
-        info!("It took {} microseconds to run the image on the plan", now.elapsed().as_micros());
+        info!(
+            "It took {} microseconds to run the image on the plan",
+            now.elapsed().as_micros()
+        );
 
         // find and display the max value with its index
         let best = result[0]
-            .to_array_view::<f32>().unwrap()
+            .to_array_view::<f32>()
+            .unwrap()
             .iter()
             .cloned()
             .zip(1..)
             .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-        
+
         let mut body_res = "";
 
         if let Some((_score, index)) = best {
@@ -110,14 +123,41 @@ mod tests {
 
     #[test]
     fn test_supports_mobile_net_v2_extension() {
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("tif")));
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("tiff")));
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("jpg")));
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("jpeg")));
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("png")));
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("bmp")));
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("ico")));
-        assert_eq!(true, MobileNetV2Indexer.supports_extension(OsStr::new("gif")));
-        assert_eq!(false, MobileNetV2Indexer.supports_extension(OsStr::new("webp")));
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("tif"))
+        );
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("tiff"))
+        );
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("jpg"))
+        );
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("jpeg"))
+        );
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("png"))
+        );
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("bmp"))
+        );
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("ico"))
+        );
+        assert_eq!(
+            true,
+            MobileNetV2Indexer.supports_extension(OsStr::new("gif"))
+        );
+        assert_eq!(
+            false,
+            MobileNetV2Indexer.supports_extension(OsStr::new("webp"))
+        );
     }
 }
