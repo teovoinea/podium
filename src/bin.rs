@@ -19,12 +19,6 @@ fn main() {
 
     ui::run_window(query_tx, result_rx);
 
-    //     let now = Instant::now();
-    // query_tx.send(query).unwrap();
-    // data.results = result_rx.recv().unwrap();
-    // println!("It took {} microseconds to execute query", now.elapsed().as_micros());
-
-    // TODO: Handle error
     if tantivy_thread.unwrap().join().is_err() {
         error!("Failed to join tantivy thread");
     }

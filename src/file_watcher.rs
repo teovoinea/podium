@@ -11,9 +11,9 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::*;
 use std::time::Duration;
 
-// Starts the file watcher thread
-// Reacts to document changes (create/update/delete)
-// Does appropriate housekeeping for documents (eg: removing old documents after update)
+/// Starts the file watcher thread
+/// Reacts to document changes (create/update/delete)
+/// Does appropriate housekeeping for documents (eg: removing old documents after update)
 pub fn start_watcher(
     directories: Vec<String>,
     index_writer: Sender<WriterAction>,
@@ -51,7 +51,7 @@ pub fn start_watcher(
                             &index_reader,
                             &index_writer,
                         );
-                        // Figure out if you can just update the facet without reprocessing the whole document?
+                        // TODO: Figure out if you can just update the facet without reprocessing the whole document?
                     }
                     _ => {
                         // Ignore the rest for now? Not sure...
@@ -63,6 +63,9 @@ pub fn start_watcher(
     }
 }
 
+/// Handles a create event from watch_dir
+/// If a folder is created, recursively process all files in the folder
+/// Otherwise process the single new file which was created
 fn create_event(
     path_buf: &PathBuf,
     schema: &Schema,
@@ -81,6 +84,9 @@ fn create_event(
     }
 }
 
+/// Processes a newly created file
+/// If the hash has been seen before, skip processing and simply add the new location to the tantivy document
+/// Otherwise process the file and create the new document
 fn create(
     path_buf: &PathBuf,
     schema: &Schema,
@@ -117,6 +123,9 @@ fn create(
     }
 }
 
+/// Handles a write event from watch_dir
+/// If a folder is written, recursively process all files in the folder
+/// Otherwise process the single file which was written
 fn write_event(
     path_buf: &PathBuf,
     schema: &Schema,
@@ -136,6 +145,10 @@ fn write_event(
     }
 }
 
+/// Processes a newly written file
+/// Removes the old document related to the file
+/// Reprocesses the file
+/// Writes a new document
 fn write(
     path_buf: &PathBuf,
     schema: &Schema,
@@ -143,8 +156,103 @@ fn write(
     index_writer: &Sender<WriterAction>,
 ) {
     // Remove the old document
-    let location_facet =
-        Facet::from_text(path_buf.as_path().canonicalize().unwrap().to_str().unwrap());
+    remove(path_buf, schema, index_reader, index_writer);
+
+    let file_hash = if let Some(f_h) = get_file_hash(path_buf.as_path()) {
+        f_h
+    } else {
+        return;
+    };
+
+    // Check if this file has been processed before at a different location
+    if let Some(doc_to_update) =
+        update_existing_file(path_buf.as_path(), &schema, &index_reader, &file_hash)
+    {
+        // If it has, add this current location to the document
+        let (_title, hash_field, _location, _body) = destructure_schema(&schema);
+        // Delete the old document
+        info!("Deleting the old document");
+        delete_doc_by_hash(
+            &index_reader,
+            &index_writer,
+            hash_field,
+            file_hash.to_hex().as_str(),
+        );
+        info!("Adding the new document: {:?}", doc_to_update);
+        index_writer.send(WriterAction::Add(doc_to_update)).unwrap();
+    }
+    // We might not need to add anything if the file already exists
+    else if let Some(doc_to_add) = process_file(path_buf.as_path(), &schema, &index_reader) {
+        index_writer.send(WriterAction::Add(doc_to_add)).unwrap();
+    }
+}
+
+/// Takes a default new doc, adds the values from old doc, but uses a different set of locations
+/// Used when removing 1 location from a list of locations
+fn new_doc_for_update(
+    new_doc: &mut Document,
+    old_doc: &Document,
+    locations: Vec<&Value>,
+    schema: &Schema,
+) {
+    let (title, hash_field, location, body) = destructure_schema(&schema);
+
+    info!("Setting title for new doc");
+    for title_value in old_doc.get_all(title) {
+        new_doc.add_text(title, title_value.text().unwrap());
+    }
+
+    info!("Setting locations for new doc");
+    for location_value in locations {
+        new_doc.add(FieldValue::new(location, location_value.clone()));
+    }
+
+    info!("Setting hash for new doc");
+
+    // There should only be 1 hash value
+    new_doc.add_text(
+        hash_field,
+        old_doc.get_first(hash_field).unwrap().text().unwrap(),
+    );
+
+    info!("Setting body for new doc");
+    for body_value in old_doc.get_all(body) {
+        new_doc.add_text(body, body_value.text().unwrap());
+    }
+}
+
+/// Handles a remove event from watch_dir
+/// If a folder is removed, recursively remove all files in the folder
+/// Otherwise remove the single file
+fn remove_event(
+    path_buf: &PathBuf,
+    schema: &Schema,
+    index_reader: &IndexReader,
+    index_writer: &Sender<WriterAction>,
+) {
+    if path_buf.is_dir() {
+        // Traverse through all the files in the directory
+        let walker = WalkDir::new(path_buf).into_iter();
+        for entry in walker.filter_entry(|e| !is_hidden(e)) {
+            let entry = entry.unwrap();
+            remove(&entry.into_path(), schema, index_reader, index_writer);
+        }
+    } else {
+        remove(path_buf, schema, index_reader, index_writer);
+    }
+}
+
+/// Removes the document which contains this given location
+/// If the document contains multiple locations (same file hash in different locations)
+///     Only remove this location from the list of locations
+fn remove(
+    path_buf: &PathBuf,
+    schema: &Schema,
+    index_reader: &IndexReader,
+    index_writer: &Sender<WriterAction>,
+) {
+    // Remove the old document
+    let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
     let (_title, _hash_field, location, _body) = destructure_schema(&schema);
     if let Some(old_doc) =
         delete_doc_by_location(&index_reader, &index_writer, location, &location_facet)
@@ -186,99 +294,9 @@ fn write(
             index_writer.send(WriterAction::Add(new_doc)).unwrap();
         }
     }
-
-    let file_hash = if let Some(f_h) = get_file_hash(path_buf.as_path()) {
-        f_h
-    } else {
-        return;
-    };
-
-    // Check if this file has been processed before at a different location
-    if let Some(doc_to_update) =
-        update_existing_file(path_buf.as_path(), &schema, &index_reader, &file_hash)
-    {
-        // If it has, add this current location to the document
-        // let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
-        let (_title, hash_field, _location, _body) = destructure_schema(&schema);
-        // Delete the old document
-        info!("Deleting the old document");
-        delete_doc_by_hash(
-            &index_reader,
-            &index_writer,
-            hash_field,
-            file_hash.to_hex().as_str(),
-        );
-        info!("Adding the new document: {:?}", doc_to_update);
-        index_writer.send(WriterAction::Add(doc_to_update)).unwrap();
-    }
-    // We might not need to add anything if the file already exists
-    else if let Some(doc_to_add) = process_file(path_buf.as_path(), &schema, &index_reader) {
-        index_writer.send(WriterAction::Add(doc_to_add)).unwrap();
-    }
 }
 
-fn new_doc_for_update(
-    new_doc: &mut Document,
-    old_doc: &Document,
-    locations: Vec<&Value>,
-    schema: &Schema,
-) {
-    let (title, hash_field, location, body) = destructure_schema(&schema);
-
-    info!("Setting title for new doc");
-    for title_value in old_doc.get_all(title) {
-        new_doc.add_text(title, title_value.text().unwrap());
-    }
-
-    info!("Setting locations for new doc");
-    for location_value in locations {
-        new_doc.add(FieldValue::new(location, location_value.clone()));
-    }
-
-    info!("Setting hash for new doc");
-
-    // There should only be 1 hash value
-    new_doc.add_text(
-        hash_field,
-        old_doc.get_first(hash_field).unwrap().text().unwrap(),
-    );
-
-    info!("Setting body for new doc");
-    for body_value in old_doc.get_all(body) {
-        new_doc.add_text(body, body_value.text().unwrap());
-    }
-}
-
-fn remove_event(
-    path_buf: &PathBuf,
-    schema: &Schema,
-    index_reader: &IndexReader,
-    index_writer: &Sender<WriterAction>,
-) {
-    if path_buf.is_dir() {
-        // Traverse through all the files in the directory
-        let walker = WalkDir::new(path_buf).into_iter();
-        for entry in walker.filter_entry(|e| !is_hidden(e)) {
-            let entry = entry.unwrap();
-            remove(&entry.into_path(), schema, index_reader, index_writer);
-        }
-    } else {
-        remove(path_buf, schema, index_reader, index_writer);
-    }
-}
-
-fn remove(
-    path_buf: &PathBuf,
-    schema: &Schema,
-    index_reader: &IndexReader,
-    index_writer: &Sender<WriterAction>,
-) {
-    // Remove the old document
-    let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
-    let (_title, _hash_field, location, _body) = destructure_schema(&schema);
-    delete_doc_by_location(&index_reader, &index_writer, location, &location_facet);
-}
-
+/// TODO: Implement
 fn rename_event(
     _src_path_buf: &PathBuf,
     _dst_path_buf: &PathBuf,
@@ -289,6 +307,7 @@ fn rename_event(
     unimplemented!();
 }
 
+/// Checks if a file or directory is hidden
 pub fn is_hidden(entry: &DirEntry) -> bool {
     entry
         .file_name()

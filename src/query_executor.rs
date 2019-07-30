@@ -78,7 +78,6 @@ pub fn start_reader(
             })
             .collect();
 
-        // TODO: Handle error
         if results.send(result).is_err() {
             error!("Failed to send search results to UI");
         }
