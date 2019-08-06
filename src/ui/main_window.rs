@@ -24,7 +24,7 @@ struct State {
     response: Option<QueryResponse>,
 }
 
-const SEARCH_SIZE: [f32; 2] = [680.0, 60.0];
+const SEARCH_SIZE: [f32; 2] = [680.0, 50.0];
 const RESULTS_SIZE: [f32; 2] = [680.0, 500.0];
 
 pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<QueryResponse>) {
@@ -33,14 +33,14 @@ pub fn run_window(query_sender: Sender<String>, results_receiver: Receiver<Query
         icon_texture: None,
         response: None,
     };
-    let mut system = super::support::init("hello_world.rs");
+    let mut system = super::support::init("podium");
     if state.icon_texture.is_none() {
         state.icon_texture =
             Some(Icon::new(system.display.get_context(), system.renderer.textures()).unwrap());
     }
     let san_fran_big = system.imgui.fonts().add_font(&[FontSource::TtfData {
         data: include_bytes!("../../assets/System San Francisco Display Regular.ttf"),
-        size_pixels: system.font_size * 2.0,
+        size_pixels: system.font_size * 2.1,
         config: None,
     }]);
 
@@ -91,14 +91,11 @@ fn hello_world<'a>(
             }
 
             ui.same_line(0.0);
-            ui.text_colored(TEXT_COLOR, im_str!("Search..."));
-
-            ui.same_line(0.0);
             let _input_bg = ui.push_style_color(StyleColor::FrameBg, WINDOW_BG);
             let _input_bg_a = ui.push_style_color(StyleColor::FrameBgActive, WINDOW_BG);
 
             if ui
-                .input_text(im_str!(""), &mut state.query)
+                .input_text(im_str!("Search"), &mut state.query)
                 .enter_returns_true(true)
                 .build()
             {
@@ -158,7 +155,7 @@ impl Icon {
     where
         F: Facade,
     {
-        let lenna_bytes = include_bytes!("../../assets/dark_search.jpg");
+        let lenna_bytes = include_bytes!("../../assets/Search.jpg");
         let byte_stream = Cursor::new(lenna_bytes.as_ref());
         let decoder = JPEGDecoder::new(byte_stream)?;
 

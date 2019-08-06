@@ -8,7 +8,7 @@ use winit::dpi::LogicalSize;
 
 const SEARCH_SIZE: LogicalSize = LogicalSize {
     width: 680f64,
-    height: 60f64,
+    height: 50f64,
 };
 
 const RESULTS_SIZE: LogicalSize = LogicalSize {
@@ -34,9 +34,9 @@ pub fn init(title: &str) -> System {
     let context = glutin::ContextBuilder::new().with_vsync(true);
     let builder = glutin::WindowBuilder::new()
         .with_title(title)
-        .with_dimensions(glutin::dpi::LogicalSize::new(680f64, 60f64))
+        .with_dimensions(SEARCH_SIZE)
         .with_resizable(false)
-        // .with_transparency(true)
+        .with_transparency(true)
         .with_always_on_top(true)
         .with_decorations(false);
     let display =

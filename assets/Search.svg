@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="275" height="275" viewBox="0 0 275 275">
+  <defs>
+    <style>
+      .cls-1, .cls-3, .cls-4 {
+        fill: none;
+      }
+
+      .cls-2 {
+        clip-path: url(#clip-path);
+      }
+
+      .cls-3, .cls-4 {
+        stroke: #707070;
+        stroke-width: 25px;
+      }
+
+      .cls-3 {
+        stroke-linejoin: round;
+      }
+
+      .cls-5 {
+        stroke: none;
+      }
+    </style>
+    <clipPath id="clip-path">
+      <rect class="cls-1" width="275" height="275"/>
+    </clipPath>
+  </defs>
+  <g id="Component_1_1" data-name="Component 1 – 1" class="cls-2">
+    <g id="Ellipse_1" data-name="Ellipse 1" class="cls-3">
+      <circle class="cls-5" cx="100" cy="100" r="100"/>
+      <circle class="cls-1" cx="100" cy="100" r="87.5"/>
+    </g>
+    <line id="Line_1" data-name="Line 1" class="cls-4" x2="114" y2="113" transform="translate(152.2 153.122)"/>
+  </g>
+</svg>
