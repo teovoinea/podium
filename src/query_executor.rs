@@ -11,15 +11,19 @@ use std::sync::mpsc::*;
 
 pub type QueryResponse = Vec<Response>;
 
+/// Each tantivy document is stored in this format to be communicated to the ui
 #[derive(Debug)]
 pub struct Response {
+    /// File title
     pub title: String,
+    /// Where the file can be found
     pub location: Vec<PathBuf>,
+    /// The content that was indexed from the file
     pub body: String,
 }
 
-// Starts the query executor thread
-// It receives queries as strings and prints them out to console
+/// Starts the query executor thread
+/// It receives queries as strings and prints them out to console
 pub fn start_reader(
     index: Index,
     reader: IndexReader,

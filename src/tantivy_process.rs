@@ -19,12 +19,12 @@ const APP_INFO: AppInfo = AppInfo {
     author: "Teodor Voinea",
 };
 
-// Starts tantivy thread
-// Starts file watcher thread
-// Does initial file processing
-// Starts reader thread
-// Owns tantivy's index_writer so it's able to write/delete documents
-// TODO: This function does too much? Should break it up
+/// Starts tantivy thread
+/// Starts file watcher thread
+/// Does initial file processing
+/// Starts reader thread
+/// Owns tantivy's index_writer so it's able to write/delete documents
+/// TODO: This function does too much? Should break it up
 pub fn start_tantivy(
     query_channel: (Sender<String>, Receiver<String>),
     result_tx: Sender<QueryResponse>,

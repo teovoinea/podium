@@ -13,6 +13,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::*;
 
+/// Actions being sent to the IndexWriter thread
 pub enum WriterAction {
     Add(Document),
     Delete(Term),
@@ -27,7 +28,7 @@ pub fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
     )
 }
 
-// Gets the `DocAddress` of a file based on the hash
+/// Gets the `DocAddress` of a file based on the hash
 pub fn get_doc_by_hash(
     index_reader: &IndexReader,
     hash_field: Field,
@@ -56,7 +57,7 @@ pub fn get_doc_by_hash(
     }
 }
 
-// Gets the `DocAddress` of a file based on the file location
+// /Gets the `DocAddress` of a file based on the file location
 pub fn get_doc_by_location(
     index_reader: &IndexReader,
     location_field: Field,
@@ -85,7 +86,7 @@ pub fn get_doc_by_location(
     }
 }
 
-// Find `DocAddress` by file location, delete the document and return its contents
+/// Find `DocAddress` by file location, delete the document and return its contents
 pub fn delete_doc_by_location(
     index_reader: &IndexReader,
     index_writer: &Sender<WriterAction>,
@@ -106,7 +107,7 @@ pub fn delete_doc_by_location(
     }
 }
 
-// Find `DocAddress` by file hash, delete the document and return its contents
+/// Find `DocAddress` by file hash, delete the document and return its contents
 pub fn delete_doc_by_hash(
     index_reader: &IndexReader,
     index_writer: &Sender<WriterAction>,
@@ -127,13 +128,13 @@ pub fn delete_doc_by_hash(
     }
 }
 
-// Calculates hash of file from Path
+/// Calculates hash of file from Path
+/// Can fail if it can't read all the bytes from the file
 pub fn get_file_hash(entry_path: &Path) -> Option<blake2b_simd::Hash> {
     let file_hash;
     {
         let mut file = fs::File::open(&entry_path).unwrap();
         let mut file_buffer = Vec::new();
-        // TODO: Handle error
         if file.read_to_end(&mut file_buffer).is_err() {
             error!("Failed to read file bytes to buffer to calculate hash");
             return None;
@@ -145,12 +146,12 @@ pub fn get_file_hash(entry_path: &Path) -> Option<blake2b_simd::Hash> {
     Some(file_hash)
 }
 
-// If a document with the same file hash already exists, we can avoid processing it again
-// In that case, if this file is found in a new location, add that location to the facet list
-// eg: if we have 2 files A and B with the same content
-// A is indexed and exists at /path/to/A
-// We will see B has the same hash as A
-// Instead of reprocessing B, we add /path/to/B to the list of locations
+/// If a document with the same file hash already exists, we can avoid processing it again
+/// In that case, if this file is found in a new location, add that location to the facet list
+/// eg: if we have 2 files A and B with the same content
+/// A is indexed and exists at /path/to/A
+/// We will see B has the same hash as A
+/// Instead of reprocessing B, we add /path/to/B to the list of locations
 pub fn update_existing_file(
     entry_path: &Path,
     schema: &Schema,
@@ -187,8 +188,8 @@ pub fn update_existing_file(
     None
 }
 
-// Processes a file by running all available indexers on it
-// Updates an existing entry if necessary
+/// Processes a file by running all available indexers on it
+/// Updates an existing entry if necessary
 pub fn process_file(
     entry_path: &Path,
     schema: &Schema,
@@ -208,7 +209,7 @@ pub fn process_file(
         return Some(doc);
     }
 
-    let analyzer = get_analyzer();
+    let analyzer = Analyzer::new();
 
     // We're indexing the file for the first time
     let results = analyzer.analyze(entry_path.extension().unwrap(), entry_path);
@@ -240,7 +241,7 @@ pub fn process_file(
     None
 }
 
-// Builds the tantivy schema
+/// Builds the tantivy schema
 pub fn build_schema() -> Schema {
     let mut schema_builder = Schema::builder();
 
@@ -255,35 +256,7 @@ pub fn build_schema() -> Schema {
     schema_builder.build()
 }
 
-#[cfg(not(target_os = "windows"))]
-fn get_analyzer() -> Analyzer {
-    Analyzer {
-        indexers: vec![
-            Box::new(TextIndexer),
-            Box::new(ExifIndexer),
-            Box::new(PdfIndexer),
-            Box::new(MobileNetV2Indexer),
-            Box::new(PptxIndexer),
-            Box::new(CsvIndexer),
-            Box::new(SpreadsheetIndexer),
-        ],
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn get_analyzer() -> Analyzer {
-    Analyzer {
-        indexers: vec![
-            Box::new(TextIndexer),
-            Box::new(ExifIndexer),
-            Box::new(PdfIndexer),
-            Box::new(PptxIndexer),
-            Box::new(CsvIndexer),
-            Box::new(SpreadsheetIndexer),
-        ],
-    }
-}
-
+/// Converts to/from Facet/PathBuf
 pub trait TantivyConvert {
     fn to_facet_value(&self) -> String;
     fn from_facet_value(facet_val: &Facet) -> PathBuf;
