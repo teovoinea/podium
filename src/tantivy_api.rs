@@ -209,7 +209,7 @@ pub fn process_file(
         return Some(doc);
     }
 
-    let analyzer = Analyzer::new();
+    let analyzer = Analyzer::default();
 
     // We're indexing the file for the first time
     let results = analyzer.analyze(entry_path.extension().unwrap(), entry_path);

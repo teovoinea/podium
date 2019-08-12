@@ -51,9 +51,11 @@ impl Analyzer {
             .map(|indexer| indexer.index_file(path))
             .collect()
     }
+}
 
+impl Default for Analyzer {
     #[cfg(not(target_os = "windows"))]
-    pub fn new() -> Analyzer {
+    fn default() -> Analyzer {
         Analyzer {
             indexers: vec![
                 Box::new(TextIndexer),
@@ -68,7 +70,7 @@ impl Analyzer {
     }
 
     #[cfg(target_os = "windows")]
-    pub fn new() -> Analyzer {
+    fn default() -> Analyzer {
         Analyzer {
             indexers: vec![
                 Box::new(TextIndexer),

@@ -16,7 +16,6 @@ use super::support::RunState;
 use crate::query_executor::QueryResponse;
 
 const WINDOW_BG: [f32; 4] = [0.27, 0.27, 0.28, 1.0];
-const TEXT_COLOR: [f32; 4] = [0.8, 0.8, 0.81, 1.0];
 
 struct State {
     query: ImString,
