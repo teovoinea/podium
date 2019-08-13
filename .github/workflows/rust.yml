@@ -4,6 +4,8 @@ on: [push]
 
 jobs:
   build:
+    name: Test with ${{ matrix.rust_version }} rust on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
