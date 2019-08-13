@@ -8,7 +8,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+#         os: [ubuntu-latest, windows-latest, macos-latest] rust isn't on macos for github yet
+        os: [ubuntu-latest, windows-latest]
         rust_version: [stable, beta, nightly]
 
     steps:
