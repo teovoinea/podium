@@ -155,7 +155,7 @@ impl Icon {
         F: Facade,
     {
         let lenna_bytes = include_bytes!("../../assets/Search.jpg");
-        let byte_stream = Cursor::new(lenna_bytes.as_ref());
+        let byte_stream: Cursor<&[u8]> = Cursor::new(lenna_bytes.as_ref());
         let decoder = JPEGDecoder::new(byte_stream)?;
 
         let (width, height) = decoder.dimensions();
