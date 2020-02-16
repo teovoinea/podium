@@ -5,7 +5,7 @@ authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-tantivy = "0.9.1"
+tantivy = "0.11.3"
 walkdir = "2"
 app_dirs = "^1.2.1"
 notify = "4.0.0"
