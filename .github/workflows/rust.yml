@@ -1,6 +1,6 @@
 name: Test
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build:
@@ -26,5 +26,5 @@ jobs:
       run: cargo fmt --all -- --check
     - name: Install clippy
       run: rustup component add clippy
-    - name: Run clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+#    - name: Run clippy
+#      run: cargo clippy --all-targets --all-features -- -D warnings
