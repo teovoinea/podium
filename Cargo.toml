@@ -10,7 +10,7 @@ walkdir = "2"
 app_dirs = "^1.2.1"
 notify = "4.0.0"
 config = "0.10.1"
-simple_logger = "1.0.1"
+simple_logger = "1.5.0"
 log = "0.4.6"
 blake2b_simd = "0.4.1"
 serde = { version = "1.0", features = ["derive"] }
