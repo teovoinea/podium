@@ -3,7 +3,6 @@ use std::thread;
 
 extern crate podium_lib;
 use podium_lib::tantivy_process::start_tantivy;
-use podium_lib::ui;
 
 #[macro_use]
 extern crate log;
@@ -16,8 +15,6 @@ fn main() {
     let tantivy_thread = thread::Builder::new()
         .name("tantivy".to_string())
         .spawn(move || start_tantivy((tantivy_query_tx, query_rx), result_tx));
-
-    ui::run_window(query_tx, result_rx);
 
     if tantivy_thread.unwrap().join().is_err() {
         error!("Failed to join tantivy thread");
