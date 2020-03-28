@@ -23,7 +23,6 @@ extern crate tantivy;
 
 pub mod indexers;
 pub mod tantivy_process;
-pub mod ui;
 
 mod file_watcher;
 mod query_executor;
