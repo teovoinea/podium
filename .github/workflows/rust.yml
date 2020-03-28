@@ -10,7 +10,7 @@ jobs:
       matrix:
 #         os: [ubuntu-latest, windows-latest, macos-latest] rust isn't on macos for github yet
         os: [ubuntu-latest, windows-latest]
-        rust_version: [stable, beta, nightly]
+        rust_version: [stable, nightly]
 
     steps:
     - uses: actions/checkout@master
