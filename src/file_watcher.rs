@@ -1,15 +1,15 @@
 use crate::tantivy_api::*;
 
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use tantivy::schema::Value;
 use tantivy::schema::*;
 use tantivy::IndexReader;
 use walkdir::{DirEntry, WalkDir};
-use crossbeam::channel::{Sender, Receiver, unbounded};
 
 use std::path::PathBuf;
-use std::time::Duration;
 use std::sync::mpsc::channel;
+use std::time::Duration;
 
 /// Starts the file watcher thread
 /// Reacts to document changes (create/update/delete)

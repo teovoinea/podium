@@ -1,12 +1,12 @@
 use crate::tantivy_api::*;
 
+use crossbeam::channel::{unbounded, Receiver, Sender};
+use serde::{Deserialize, Serialize};
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::IndexReader;
-use crossbeam::channel::{Sender, Receiver, unbounded};
-use serde::{Serialize, Deserialize};
 
 use std::path::*;
 

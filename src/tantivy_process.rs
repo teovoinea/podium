@@ -4,11 +4,11 @@ use crate::tantivy_api::*;
 
 use app_dirs::*;
 use config::*;
+use crossbeam::channel::unbounded;
+use crossbeam::channel::{Receiver, Sender};
 use tantivy::directory::*;
 use tantivy::{Index, ReloadPolicy, Term};
 use walkdir::WalkDir;
-use crossbeam::channel::{Sender, Receiver};
-use crossbeam::channel::unbounded;
 
 use std::collections::HashMap;
 use std::fs;

@@ -1,11 +1,11 @@
 use crate::indexers::*;
 
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use tantivy::collector::{Count, TopDocs};
 use tantivy::query::TermQuery;
 use tantivy::schema::*;
 use tantivy::DocAddress;
 use tantivy::IndexReader;
-use crossbeam::channel::{Sender, Receiver, unbounded};
 
 use blake2b_simd::blake2b;
 
