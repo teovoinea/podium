@@ -28,7 +28,13 @@ msoffice_shared = "0.1.1"
 csv = "1"
 calamine = "0.15.4"
 opener = "0.4.0"
-# Windows support isn't great for tensorflow-rust yet tensorflow = "0.13.0"
+actix-web = "2"
+actix-rt = "1"
+futures = "0.3.1"
+crossbeam = "0.7.3"
+actix-cors = "0.2.0"
+# TODO: once paperclip stabilizes actix open api generator - https://paperclip.waffles.space/actix-plugin.html
+# paperclip = { version = "0.3.0", features = ["actix"] }
 
 [target."cfg(not(windows))".dependencies]
 tract-tensorflow = "0.3.3"
@@ -60,14 +66,3 @@ debug-assertions = false
 codegen-units = 1
 panic = 'unwind'
 overflow-checks = false
-
-# [profile.bench]
-# opt-level = 3
-# debug = false
-# rpath = false
-# lto = false
-# debug-assertions = false
-# codegen-units = 16
-# panic = 'unwind'
-# incremental = false
-# overflow-checks = false

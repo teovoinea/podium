@@ -5,11 +5,11 @@ use tantivy::schema::Value;
 use tantivy::schema::*;
 use tantivy::IndexReader;
 use walkdir::{DirEntry, WalkDir};
+use crossbeam::channel::{Sender, Receiver, unbounded};
 
 use std::path::PathBuf;
-use std::sync::mpsc::channel;
-use std::sync::mpsc::*;
 use std::time::Duration;
+use std::sync::mpsc::channel;
 
 /// Starts the file watcher thread
 /// Reacts to document changes (create/update/delete)

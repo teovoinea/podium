@@ -5,13 +5,13 @@ use tantivy::query::TermQuery;
 use tantivy::schema::*;
 use tantivy::DocAddress;
 use tantivy::IndexReader;
+use crossbeam::channel::{Sender, Receiver, unbounded};
 
 use blake2b_simd::blake2b;
 
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::*;
 
 /// Actions being sent to the IndexWriter thread
 pub enum WriterAction {

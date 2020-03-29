@@ -7,11 +7,12 @@ use config::*;
 use tantivy::directory::*;
 use tantivy::{Index, ReloadPolicy, Term};
 use walkdir::WalkDir;
+use crossbeam::channel::{Sender, Receiver};
+use crossbeam::channel::unbounded;
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::sync::mpsc::*;
 use std::thread;
 
 const APP_INFO: AppInfo = AppInfo {
@@ -43,12 +44,6 @@ pub fn start_tantivy(
 
     if !config_file.as_path().exists() {
         info!("Config file not found, copying default config");
-
-        // Notification::new().summary("Welcome!")
-        //                 .body("Since this is your first time running podium, it will take a few minutes to index your files.")
-        //                 .show()
-        //                 .unwrap();
-
         let default_config_path = Path::new("debug_default_config.json");
         fs::copy(default_config_path, &config_file).unwrap();
     }
@@ -70,7 +65,7 @@ pub fn start_tantivy(
 
     let directories_clone = directories.clone();
 
-    let (index_writer_tx, index_writer_rx) = channel();
+    let (index_writer_tx, index_writer_rx) = unbounded();
 
     let watcher_index_writer = index_writer_tx.clone();
 
@@ -133,7 +128,7 @@ pub fn start_tantivy(
         // After we finished doing the initial processing, add the file so that we know for next time
         fs::File::create(initial_processing_file).unwrap();
     } else {
-        println!("Initial processing already done! Starting a reader");
+        info!("Initial processing already done! Starting a reader");
     }
 
     let reader_schema = schema.clone();

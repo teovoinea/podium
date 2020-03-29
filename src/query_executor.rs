@@ -5,14 +5,15 @@ use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::IndexReader;
+use crossbeam::channel::{Sender, Receiver, unbounded};
+use serde::{Serialize, Deserialize};
 
 use std::path::*;
-use std::sync::mpsc::*;
 
 pub type QueryResponse = Vec<Response>;
 
 /// Each tantivy document is stored in this format to be communicated to the ui
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
     /// File title
     pub title: String,
