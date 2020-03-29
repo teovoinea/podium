@@ -1,5 +1,6 @@
 use crate::tantivy_api::*;
 
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use tantivy::schema::Value;
 use tantivy::schema::*;
@@ -8,7 +9,6 @@ use walkdir::{DirEntry, WalkDir};
 
 use std::path::PathBuf;
 use std::sync::mpsc::channel;
-use std::sync::mpsc::*;
 use std::time::Duration;
 
 /// Starts the file watcher thread

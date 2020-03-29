@@ -22,8 +22,9 @@ extern crate simple_logger;
 extern crate tantivy;
 
 pub mod indexers;
+pub mod query_executor;
 pub mod tantivy_process;
 
 mod file_watcher;
-mod query_executor;
+
 mod tantivy_api;

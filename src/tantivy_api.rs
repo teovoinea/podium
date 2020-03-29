@@ -1,5 +1,6 @@
 use crate::indexers::*;
 
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use tantivy::collector::{Count, TopDocs};
 use tantivy::query::TermQuery;
 use tantivy::schema::*;
@@ -11,7 +12,6 @@ use blake2b_simd::blake2b;
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::*;
 
 /// Actions being sent to the IndexWriter thread
 pub enum WriterAction {
