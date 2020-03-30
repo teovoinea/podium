@@ -54,13 +54,13 @@ jobs:
           asset_path: target/release/podium
           asset_name: podium-${{ matrix.os }}
           asset_content_type: application/octet-stream
-          - name: Upload Release Asset
-          uses: actions/upload-release-asset@v1
-          if: matrix.os == 'windows-latest'
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ jobs.create_release.steps.create_release_action.outputs.upload_url }}
-            asset_path: target/release/podium.exe
-            asset_name: podium-${{ matrix.os }}.exe
-            asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        if: matrix.os == 'windows-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ jobs.create_release.steps.create_release_action.outputs.upload_url }}
+          asset_path: target/release/podium.exe
+          asset_name: podium-${{ matrix.os }}.exe
+          asset_content_type: application/octet-stream
