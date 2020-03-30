@@ -1,0 +1,66 @@
+name: Publish to crates.io
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Create Release
+        id: create_release_action
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+
+  # crates_io:
+  #   name: Publish crate to crates.io
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@master
+  #     - name: Cargo login
+  #       run: cargo login ${{ secrets.CARGO_LOGIN_KEY }}
+  #     - name: Cargo publish
+  #       run: cargo publish
+
+  build:
+    name: Build ${{ matrix.os }} release binaries of podium
+    runs-on: ${{ matrix.os }}
+    needs: create_release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@master
+      - name: Use stable rust
+        run: rustup default stable
+      - name: Build release
+        run: cargo build --release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        if: matrix.os != 'windows-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ jobs.create_release.steps.create_release_action.outputs.upload_url }}
+          asset_path: target/release/podium
+          asset_name: podium-${{ matrix.os }}
+          asset_content_type: application/octet-stream
+          - name: Upload Release Asset
+          uses: actions/upload-release-asset@v1
+          if: matrix.os == 'windows-latest'
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ jobs.create_release.steps.create_release_action.outputs.upload_url }}
+            asset_path: target/release/podium.exe
+            asset_name: podium-${{ matrix.os }}.exe
+            asset_content_type: application/octet-stream

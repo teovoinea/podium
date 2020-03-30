@@ -1,6 +1,6 @@
 [package]
 name = "podium"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
 edition = "2018"
 
@@ -18,7 +18,7 @@ serde_json = "1.0"
 serde_derive = "1.0"
 lazy_static = "1.4.0"
 kamadak-exif = "0.3"
-reverse_geocoder = { git = "https://github.com/llambda/rrgeo"}
+reverse_geocoder = "1.0.1"
 pdf-extract = "0.4.6"
 regex = "1"
 image = "0.21.2"
