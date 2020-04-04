@@ -1,10 +1,10 @@
 use std::thread;
 
 extern crate podium_lib;
+use podium_lib::contracts::AppState::*;
 use podium_lib::query_executor::QueryResponse;
+use podium_lib::routes::search;
 use podium_lib::tantivy_process::start_tantivy;
-use podium_lib::routes::{search};
-use podium_lib::contracts::{AppState::*};
 
 #[macro_use]
 extern crate log;

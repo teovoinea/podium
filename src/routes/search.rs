@@ -1,9 +1,8 @@
-use actix_web::{web, HttpRequest, HttpResponse};
 use crate::contracts::AppState::*;
+use actix_web::{web, HttpRequest, HttpResponse};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg
-        .route("/search/{query}", web::get().to(index));
+    cfg.route("/search/{query}", web::get().to(index));
 }
 
 async fn index(app_state: web::Data<AppState>, req: HttpRequest) -> HttpResponse {
