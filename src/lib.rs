@@ -20,6 +20,7 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate simple_logger;
 extern crate tantivy;
+extern crate tract_tensorflow;
 
 pub mod indexers;
 pub mod query_executor;

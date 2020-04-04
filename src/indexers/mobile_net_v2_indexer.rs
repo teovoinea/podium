@@ -6,33 +6,33 @@ use std::path::Path;
 
 use std::time::Instant;
 
+use once_cell::sync::Lazy;
+
+use tract_tensorflow::prelude::*;
 use tract_core::ndarray;
-use tract_core::prelude::*;
 
-lazy_static! {
-    static ref LABELS: Vec<&'static str> = {
-        let labels: Vec<&str> = include_str!("../../models/imagenet_slim_labels.txt")
-                        .lines()
-                        .collect();
-        labels
-    };
+static MODEL: Lazy<tract_tensorflow::prelude::ModelImpl<TypedFact, Box<dyn TypedOp + 'static>>> = Lazy::new(|| {
+    let now = Instant::now();
+    // load the model
+    let model_bytes = include_bytes!("../../models/mobilenet_v2_1.4_224_frozen.pb");
+    let mut model_bytes = Cursor::new(&model_bytes[..]);
+    let mut model = tract_tensorflow::tensorflow().model_for_read(&mut model_bytes).unwrap();
 
-    static ref MODEL: Model<TypedTensorInfo> = {
-        let now = Instant::now();
-        // load the model
-        let model_bytes = include_bytes!("../../models/mobilenet_v2_1.4_224_frozen.pb");
-        let mut model_bytes = Cursor::new(&model_bytes[..]);
-        let mut model = tract_tensorflow::tensorflow().model_for_read(&mut model_bytes).unwrap();
+    // specify input type and shape
+    model.set_input_fact(0, InferenceFact::dt_shape(f32::datum_type(), tvec!(1, 224, 224, 3))).unwrap();
 
-        // specify input type and shape
-        model.set_input_fact(0, TensorFact::dt_shape(f32::datum_type(), tvec!(1, 224, 224, 3))).unwrap();
+    // optimize the model and get an execution plan
+    let model = model.into_optimized().unwrap();
+    info!("It took {} microseconds to load and optimize the model", now.elapsed().as_micros());
+    model
+});
 
-        // optimize the model and get an execution plan
-        let model = model.into_optimized().unwrap();
-        info!("It took {} microseconds to load and optimize the model", now.elapsed().as_micros());
-        model
-    };
-}
+static LABELS: Lazy<Vec<&'static str>> = Lazy::new(||{
+    let labels: Vec<&str> = include_str!("../../models/imagenet_slim_labels.txt")
+                    .lines()
+                    .collect();
+    labels
+});
 
 pub struct MobileNetV2Indexer;
 
@@ -52,10 +52,10 @@ impl Indexer for MobileNetV2Indexer {
     // https://github.com/snipsco/tract/tree/master/examples/tensorflow-mobilenet-v2
     fn index_file(&self, path: &Path) -> DocumentSchema {
         let now = Instant::now();
-        let t_model = MODEL.clone();
-        let plan = SimplePlan::new(&t_model).unwrap();
+        let t_model: &ModelImpl<_, _> = &*MODEL;
+        let plan = SimplePlan::new(t_model).unwrap();
         info!(
-            "It took {} microseconds to clone and build the plan",
+            "It took {} microseconds to build the plan",
             now.elapsed().as_micros()
         );
 
