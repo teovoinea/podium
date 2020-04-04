@@ -16,12 +16,16 @@ jobs:
     - name: Use ${{ matrix.rust_version }} rust
       run: rustup default ${{ matrix.rust_version }}
     - name: Install rustfmt
+      if: matrix.rust_version == 'stable'
       run: rustup component add rustfmt
     - name: Run fmt
+      if: matrix.rust_version == 'stable'
       run: cargo fmt --all -- --check
     - name: Install clippy
+      if: matrix.rust_version == 'stable'
       run: rustup component add clippy
 #    - name: Run clippy
+#      if: matrix.rust_version == 'stable'
 #      run: cargo clippy --all-targets --all-features -- -D warnings
     - name: Build
       run: cargo build --verbose
