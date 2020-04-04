@@ -8,29 +8,40 @@ use std::time::Instant;
 
 use once_cell::sync::Lazy;
 
-use tract_tensorflow::prelude::*;
 use tract_core::ndarray;
+use tract_tensorflow::prelude::*;
 
-static MODEL: Lazy<tract_tensorflow::prelude::ModelImpl<TypedFact, Box<dyn TypedOp + 'static>>> = Lazy::new(|| {
-    let now = Instant::now();
-    // load the model
-    let model_bytes = include_bytes!("../../models/mobilenet_v2_1.4_224_frozen.pb");
-    let mut model_bytes = Cursor::new(&model_bytes[..]);
-    let mut model = tract_tensorflow::tensorflow().model_for_read(&mut model_bytes).unwrap();
+static MODEL: Lazy<tract_tensorflow::prelude::ModelImpl<TypedFact, Box<dyn TypedOp + 'static>>> =
+    Lazy::new(|| {
+        let now = Instant::now();
+        // load the model
+        let model_bytes = include_bytes!("../../models/mobilenet_v2_1.4_224_frozen.pb");
+        let mut model_bytes = Cursor::new(&model_bytes[..]);
+        let mut model = tract_tensorflow::tensorflow()
+            .model_for_read(&mut model_bytes)
+            .unwrap();
 
-    // specify input type and shape
-    model.set_input_fact(0, InferenceFact::dt_shape(f32::datum_type(), tvec!(1, 224, 224, 3))).unwrap();
+        // specify input type and shape
+        model
+            .set_input_fact(
+                0,
+                InferenceFact::dt_shape(f32::datum_type(), tvec!(1, 224, 224, 3)),
+            )
+            .unwrap();
 
-    // optimize the model and get an execution plan
-    let model = model.into_optimized().unwrap();
-    info!("It took {} microseconds to load and optimize the model", now.elapsed().as_micros());
-    model
-});
+        // optimize the model and get an execution plan
+        let model = model.into_optimized().unwrap();
+        info!(
+            "It took {} microseconds to load and optimize the model",
+            now.elapsed().as_micros()
+        );
+        model
+    });
 
-static LABELS: Lazy<Vec<&'static str>> = Lazy::new(||{
+static LABELS: Lazy<Vec<&'static str>> = Lazy::new(|| {
     let labels: Vec<&str> = include_str!("../../models/imagenet_slim_labels.txt")
-                    .lines()
-                    .collect();
+        .lines()
+        .collect();
     labels
 });
 
