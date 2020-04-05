@@ -1,5 +1,7 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::error_adapter::log_and_return_error_string;
+use anyhow::{Context, Result};
 use std::ffi::OsStr;
 use std::path::Path;
 
@@ -13,8 +15,12 @@ impl Indexer for SpreadsheetIndexer {
         extension == OsStr::new("xlsx")
     }
 
-    fn index_file(&self, path: &Path) -> DocumentSchema {
-        let mut workbook: Xlsx<_> = open_workbook(path).expect("Cannot open file");
+    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+        let mut workbook: Xlsx<_> =
+            open_workbook(path).expect(&log_and_return_error_string(format!(
+                "spreadsheet_indexer: Failed to open workbook at path: {:?}",
+                path
+            )));
         let sheet_names = workbook.sheet_names().to_vec();
 
         let strings = sheet_names
@@ -36,10 +42,10 @@ impl Indexer for SpreadsheetIndexer {
                 acc
             });
 
-        DocumentSchema {
+        Ok(DocumentSchema {
             name: String::new(),
             body: strings,
-        }
+        })
     }
 }
 
@@ -50,7 +56,7 @@ mod tests {
     #[test]
     fn test_indexing_spreadsheet_file() {
         let test_file_path = Path::new("./test_files/Cats.xlsx");
-        let indexed_document = SpreadsheetIndexer.index_file(test_file_path);
+        let indexed_document = SpreadsheetIndexer.index_file(test_file_path).unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(indexed_document.body, "this sheet is about cats cats have paws they\'re pretty cool Horses are also an animal Horses don\'t have paws Weird isn\'t it? ");

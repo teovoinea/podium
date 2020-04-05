@@ -1,9 +1,11 @@
 use super::DocumentSchema;
 use super::Indexer;
-use exif::{Rational, Tag, Value};
+use crate::error_adapter::log_and_return_error_string;
 use std::ffi::OsStr;
 use std::path::Path;
 
+use anyhow::{Context, Result};
+use exif::{Rational, Tag, Value};
 use reverse_geocoder::{Locations, ReverseGeocoder};
 
 lazy_static! {
@@ -21,9 +23,19 @@ impl Indexer for ExifIndexer {
             || extension == OsStr::new("jpeg")
     }
 
-    fn index_file(&self, path: &Path) -> DocumentSchema {
-        let file = std::fs::File::open(path).unwrap();
-        let reader = exif::Reader::new(&mut std::io::BufReader::new(&file)).unwrap();
+    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+        let file = std::fs::File::open(path).with_context(|| {
+            log_and_return_error_string(format!(
+                "exif_indexer: Failed to read image file at path: {:?}",
+                path
+            ))
+        })?;
+        let reader = exif::Reader::new(&mut std::io::BufReader::new(&file)).with_context(|| {
+            log_and_return_error_string(format!(
+                "exif_indexer: Failed to initialize exif reader for file at path: {:?}",
+                path
+            ))
+        })?;
         let mut lat_direction = 0_u8 as char;
         let mut lat = 0.0;
         let mut lon_direction = 0_u8 as char;
@@ -62,11 +74,15 @@ impl Indexer for ExifIndexer {
             lon *= -1.0;
         }
 
-        let res = GEOCODER.search(&[lat, lon]).unwrap().get(0).unwrap().1;
-        DocumentSchema {
+        let res = GEOCODER.search(&[lat, lon])
+            .with_context(|| log_and_return_error_string(format!("exif_indexer: Failed to search for location in geocoder: lat = {:?} lon = {:?}", lat, lon)))?
+            .get(0)
+            .with_context(|| log_and_return_error_string(format!("exif_indexer: Failed to get first result from search in geocoder")))?
+            .1;
+        Ok(DocumentSchema {
             name: String::new(),
             body: format!("{} {} {} {}", res.name, res.admin1, res.admin2, res.admin3),
-        }
+        })
     }
 }
 
@@ -85,7 +101,7 @@ mod tests {
     #[test]
     fn test_indexing_text_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
-        let indexed_document = ExifIndexer.index_file(test_file_path);
+        let indexed_document = ExifIndexer.index_file(test_file_path).unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(indexed_document.body, "Pacureti Prahova Comuna Pacureti RO");

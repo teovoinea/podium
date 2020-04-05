@@ -76,17 +76,6 @@ pub fn start_tantivy(
         .reload_policy(ReloadPolicy::OnCommit)
         .try_into()?;
 
-    let _watcher_thread = thread::Builder::new()
-        .name("file_watcher_thread".to_string())
-        .spawn(|| {
-            start_watcher(
-                directories_clone,
-                watcher_index_writer,
-                watcher_schema,
-                watcher_reader,
-            )
-        });
-
     let mut index_writer = index.writer(50_000_000)?;
 
     if !initial_processing_file.exists() {
@@ -94,6 +83,13 @@ pub fn start_tantivy(
         for directory in directories {
             let walker = WalkDir::new(directory).into_iter();
             for entry in walker.filter_entry(|e| !is_hidden(e)) {
+                match entry {
+                    Err(_) => {
+                        error!("Failed to read entry from dir walker: {:?}", entry);
+                        continue;
+                    }
+                    _ => {}
+                }
                 let entry = entry.unwrap();
                 if !entry.file_type().is_dir() {
                     let entry_path = entry.path();
@@ -130,6 +126,17 @@ pub fn start_tantivy(
     } else {
         info!("Initial processing already done! Starting a reader");
     }
+
+    let _watcher_thread = thread::Builder::new()
+        .name("file_watcher_thread".to_string())
+        .spawn(|| {
+            start_watcher(
+                directories_clone,
+                watcher_index_writer,
+                watcher_schema,
+                watcher_reader,
+            )
+        });
 
     let reader_schema = schema.clone();
 
