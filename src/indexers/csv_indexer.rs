@@ -1,9 +1,10 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 use std::ffi::OsStr;
-use std::path::Path;
+use std::io::Cursor;
 
 pub struct CsvIndexer;
 
@@ -12,20 +13,15 @@ impl Indexer for CsvIndexer {
         extension == OsStr::new("csv")
     }
 
-    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
-        let mut reader = csv::Reader::from_path(path).with_context(|| {
-            log_and_return_error_string(format!(
-                "csv_indexer: Failed to read csv from path: {:?}",
-                path
-            ))
-        })?;
+    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
+        let mut reader = csv::Reader::from_reader(Cursor::new(&file_to_process.contents));
 
         let headers = reader
             .headers()
             .with_context(|| {
                 log_and_return_error_string(format!(
                     "csv_indexer: Failed to get headers from csv at path: {:?}",
-                    path
+                    file_to_process.path
                 ))
             })?
             .iter()
@@ -45,11 +41,14 @@ impl Indexer for CsvIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn test_indexing_csv_file() {
         let test_file_path = Path::new("./test_files/data.csv");
-        let indexed_document = CsvIndexer.index_file(test_file_path).unwrap();
+        let indexed_document = CsvIndexer
+            .index_file(&FileToProcess::from(test_file_path))
+            .unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(

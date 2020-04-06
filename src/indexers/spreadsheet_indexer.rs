@@ -1,5 +1,6 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 use std::ffi::OsStr;
@@ -15,11 +16,11 @@ impl Indexer for SpreadsheetIndexer {
         extension == OsStr::new("xlsx")
     }
 
-    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
         let mut workbook: Xlsx<_> =
-            open_workbook(path).expect(&log_and_return_error_string(format!(
+            open_workbook(&file_to_process.path).expect(&log_and_return_error_string(format!(
                 "spreadsheet_indexer: Failed to open workbook at path: {:?}",
-                path
+                file_to_process.path
             )));
         let sheet_names = workbook.sheet_names().to_vec();
 
@@ -56,7 +57,9 @@ mod tests {
     #[test]
     fn test_indexing_spreadsheet_file() {
         let test_file_path = Path::new("./test_files/Cats.xlsx");
-        let indexed_document = SpreadsheetIndexer.index_file(test_file_path).unwrap();
+        let indexed_document = SpreadsheetIndexer
+            .index_file(&FileToProcess::from(test_file_path))
+            .unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(indexed_document.body, "this sheet is about cats cats have paws they\'re pretty cool Horses are also an animal Horses don\'t have paws Weird isn\'t it? ");

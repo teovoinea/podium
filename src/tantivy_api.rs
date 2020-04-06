@@ -7,6 +7,10 @@ use tantivy::schema::*;
 use tantivy::DocAddress;
 use tantivy::IndexReader;
 
+use crate::contracts::file_to_process::FileToProcess;
+use crate::error_adapter::log_and_return_error_string;
+use anyhow::{Context, Result};
+
 use blake2b_simd::blake2b;
 
 use std::fs;
@@ -130,20 +134,19 @@ pub fn delete_doc_by_hash(
 
 /// Calculates hash of file from Path
 /// Can fail if it can't read all the bytes from the file
-pub fn get_file_hash(entry_path: &Path) -> Option<blake2b_simd::Hash> {
+pub fn get_file_hash(entry_path: &Path) -> Result<blake2b_simd::Hash> {
     let file_hash;
-    {
-        let mut file = fs::File::open(&entry_path).unwrap();
-        let mut file_buffer = Vec::new();
-        if file.read_to_end(&mut file_buffer).is_err() {
-            error!("Failed to read file bytes to buffer to calculate hash");
-            return None;
-        }
-
-        file_hash = blake2b(file_buffer.as_slice());
-    }
+    let mut file = fs::File::open(&entry_path).unwrap();
+    let mut file_buffer = Vec::new();
+    file.read_to_end(&mut file_buffer).with_context(|| {
+        log_and_return_error_string(format!(
+            "tantivy_api: Failed to read buffer to end for file at path: {:?}",
+            entry_path
+        ))
+    })?;
+    file_hash = blake2b(file_buffer.as_slice());
     trace!("Hash of file is: {:?}", file_hash);
-    Some(file_hash)
+    Ok(file_hash)
 }
 
 /// If a document with the same file hash already exists, we can avoid processing it again
@@ -153,11 +156,12 @@ pub fn get_file_hash(entry_path: &Path) -> Option<blake2b_simd::Hash> {
 /// We will see B has the same hash as A
 /// Instead of reprocessing B, we add /path/to/B to the list of locations
 pub fn update_existing_file(
-    entry_path: &Path,
+    file_to_process: &FileToProcess,
     schema: &Schema,
     index_reader: &IndexReader,
-    hash: &blake2b_simd::Hash,
 ) -> Option<Document> {
+    let entry_path = &file_to_process.path;
+    let hash = file_to_process.hash;
     let searcher = index_reader.searcher();
     let location_facet = &entry_path.to_facet_value();
     let (_title, hash_field, location, _body) = destructure_schema(schema);
@@ -191,34 +195,31 @@ pub fn update_existing_file(
 /// Processes a file by running all available indexers on it
 /// Updates an existing entry if necessary
 pub fn process_file(
-    entry_path: &Path,
+    file_to_process: &FileToProcess,
     schema: &Schema,
     index_reader: &IndexReader,
 ) -> Option<Document> {
+    let entry_path = &file_to_process.path;
+    let file_hash = file_to_process.hash;
     if entry_path.extension() == None {
         trace!("Skipping, no file extension: {:?}", entry_path);
         return None;
     }
 
     let location_facet = &entry_path.to_facet_value();
-    let file_hash = if let Some(f_h) = get_file_hash(entry_path) {
-        f_h
-    } else {
-        return None;
-    };
 
     trace!("Processing: {:?}", entry_path);
     trace!("Hash of file is: {:?}", file_hash);
 
     // Check if the file has already been indexed
-    if let Some(doc) = update_existing_file(entry_path, &schema, &index_reader, &file_hash) {
+    if let Some(doc) = update_existing_file(file_to_process, &schema, &index_reader) {
         return Some(doc);
     }
 
     let analyzer = Analyzer::default();
 
     // We're indexing the file for the first time
-    let results = analyzer.analyze(entry_path.extension().unwrap(), entry_path);
+    let results = analyzer.analyze(entry_path.extension().unwrap(), file_to_process);
     if !results.is_empty() {
         info!("This is a new file, we need to process it");
         let title = &results[0].name;

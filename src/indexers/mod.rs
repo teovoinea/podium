@@ -23,6 +23,8 @@ use std::path::Path;
 
 use anyhow::Result;
 
+use crate::contracts::file_to_process::FileToProcess;
+
 /// The schema of the information that an Indexer extracts from a file
 #[derive(Debug)]
 pub struct DocumentSchema {
@@ -37,7 +39,7 @@ pub trait Indexer {
     fn supports_extension(&self, extension: &OsStr) -> bool;
 
     /// The logic behind the Indexer to extract information from a file
-    fn index_file(&self, path: &Path) -> Result<DocumentSchema>;
+    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema>;
 }
 
 /// Container for all Indexers
@@ -47,11 +49,15 @@ pub struct Analyzer {
 
 impl Analyzer {
     /// Applies the indexing function of Indexers that support the given extension
-    pub fn analyze(&self, extension: &OsStr, path: &Path) -> Vec<DocumentSchema> {
+    pub fn analyze(
+        &self,
+        extension: &OsStr,
+        file_to_process: &FileToProcess,
+    ) -> Vec<DocumentSchema> {
         self.indexers
             .iter()
             .filter(|indexer| indexer.supports_extension(extension))
-            .filter_map(|indexer| indexer.index_file(path).ok())
+            .filter_map(|indexer| indexer.index_file(file_to_process).ok())
             .collect()
     }
 }

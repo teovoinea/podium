@@ -1,8 +1,9 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use std::ffi::OsStr;
-use std::path::Path;
+use std::io::Cursor;
 
 use anyhow::{Context, Result};
 use exif::{Rational, Tag, Value};
@@ -23,19 +24,14 @@ impl Indexer for ExifIndexer {
             || extension == OsStr::new("jpeg")
     }
 
-    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
-        let file = std::fs::File::open(path).with_context(|| {
-            log_and_return_error_string(format!(
-                "exif_indexer: Failed to read image file at path: {:?}",
-                path
-            ))
-        })?;
-        let reader = exif::Reader::new(&mut std::io::BufReader::new(&file)).with_context(|| {
-            log_and_return_error_string(format!(
-                "exif_indexer: Failed to initialize exif reader for file at path: {:?}",
-                path
-            ))
-        })?;
+    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
+        let reader =
+            exif::Reader::new(&mut Cursor::new(&file_to_process.contents)).with_context(|| {
+                log_and_return_error_string(format!(
+                    "exif_indexer: Failed to initialize exif reader for file at path: {:?}",
+                    file_to_process.path
+                ))
+            })?;
         let mut lat_direction = 0_u8 as char;
         let mut lat = 0.0;
         let mut lon_direction = 0_u8 as char;
@@ -97,11 +93,14 @@ fn def_to_dec_dec(deg: f64, min: f64, sec: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn test_indexing_text_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
-        let indexed_document = ExifIndexer.index_file(test_file_path).unwrap();
+        let indexed_document = ExifIndexer
+            .index_file(&FileToProcess::from(test_file_path))
+            .unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(indexed_document.body, "Pacureti Prahova Comuna Pacureti RO");
