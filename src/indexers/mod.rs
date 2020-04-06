@@ -13,12 +13,15 @@ pub use self::exif_indexer::ExifIndexer;
 pub use self::mobile_net_v2_indexer::MobileNetV2Indexer;
 pub use self::pdf_indexer::PdfIndexer;
 pub use self::text_indexer::TextIndexer;
-use std::ffi::OsStr;
-use std::path::Path;
 // pub use self::docx_indexer::DocxIndexer;
 pub use self::csv_indexer::CsvIndexer;
 pub use self::pptx_indexer::PptxIndexer;
 pub use self::spreadsheet_indexer::SpreadsheetIndexer;
+
+use std::ffi::OsStr;
+use std::path::Path;
+
+use anyhow::Result;
 
 /// The schema of the information that an Indexer extracts from a file
 #[derive(Debug)]
@@ -34,7 +37,7 @@ pub trait Indexer {
     fn supports_extension(&self, extension: &OsStr) -> bool;
 
     /// The logic behind the Indexer to extract information from a file
-    fn index_file(&self, path: &Path) -> DocumentSchema;
+    fn index_file(&self, path: &Path) -> Result<DocumentSchema>;
 }
 
 /// Container for all Indexers
@@ -48,7 +51,7 @@ impl Analyzer {
         self.indexers
             .iter()
             .filter(|indexer| indexer.supports_extension(extension))
-            .map(|indexer| indexer.index_file(path))
+            .filter_map(|indexer| indexer.index_file(path).ok())
             .collect()
     }
 }

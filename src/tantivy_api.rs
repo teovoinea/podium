@@ -195,6 +195,11 @@ pub fn process_file(
     schema: &Schema,
     index_reader: &IndexReader,
 ) -> Option<Document> {
+    if entry_path.extension() == None {
+        trace!("Skipping, no file extension: {:?}", entry_path);
+        return None;
+    }
+
     let location_facet = &entry_path.to_facet_value();
     let file_hash = if let Some(f_h) = get_file_hash(entry_path) {
         f_h
@@ -202,6 +207,7 @@ pub fn process_file(
         return None;
     };
 
+    trace!("Processing: {:?}", entry_path);
     trace!("Hash of file is: {:?}", file_hash);
 
     // Check if the file has already been indexed

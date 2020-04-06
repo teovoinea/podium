@@ -1,5 +1,7 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::error_adapter::log_and_return_error_string;
+use anyhow::{Context, Result};
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
@@ -11,16 +13,28 @@ impl Indexer for TextIndexer {
         extension == OsStr::new("txt")
     }
 
-    fn index_file(&self, path: &Path) -> DocumentSchema {
-        DocumentSchema {
-            name: path
-                .file_name()
-                .unwrap()
-                .to_os_string()
-                .into_string()
-                .unwrap(),
-            body: fs::read_to_string(path).unwrap(),
-        }
+    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+        let name = path
+            .file_name()
+            .unwrap()
+            .to_os_string()
+            .into_string()
+            .expect(&log_and_return_error_string(format!(
+                "text_indexer: Failed to get file name for file at path: {:?}",
+                path
+            )));
+
+        let body = fs::read_to_string(path).with_context(|| {
+            log_and_return_error_string(format!(
+                "text_indexer: Failed to read file to string at path: {:?}",
+                path
+            ))
+        })?;
+
+        Ok(DocumentSchema {
+            name: name,
+            body: body,
+        })
     }
 }
 
@@ -31,7 +45,7 @@ mod tests {
     #[test]
     fn test_indexing_text_file() {
         let test_file_path = Path::new("./test_files/file.txt");
-        let indexed_document = TextIndexer.index_file(test_file_path);
+        let indexed_document = TextIndexer.index_file(test_file_path).unwrap();
 
         assert_eq!(indexed_document.name, "file.txt");
         assert_eq!(

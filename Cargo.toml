@@ -34,6 +34,7 @@ futures = "0.3.1"
 crossbeam = "0.7.3"
 actix-cors = "0.2.0"
 once_cell = "1.3.1"
+anyhow = "1.0"
 # TODO: once paperclip stabilizes actix open api generator - https://paperclip.waffles.space/actix-plugin.html
 # paperclip = { version = "0.3.0", features = ["actix"] }
 

@@ -4,6 +4,7 @@ extern crate lazy_static;
 extern crate log;
 
 pub mod contracts;
+pub mod error_adapter;
 pub mod indexers;
 pub mod query_executor;
 pub mod routes;

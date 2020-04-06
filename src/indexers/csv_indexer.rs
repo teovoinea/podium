@@ -1,5 +1,7 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::error_adapter::log_and_return_error_string;
+use anyhow::{Context, Result};
 use std::ffi::OsStr;
 use std::path::Path;
 
@@ -10,28 +12,33 @@ impl Indexer for CsvIndexer {
         extension == OsStr::new("csv")
     }
 
-    fn index_file(&self, path: &Path) -> DocumentSchema {
-        let mut reader = csv::Reader::from_path(path).unwrap();
-        if reader.has_headers() {
-            let headers = reader
-                .headers()
-                .unwrap()
-                .iter()
-                .fold(String::new(), |mut acc, x| {
-                    acc.push_str(&x);
-                    acc.push_str(" ");
-                    acc
-                });
-            DocumentSchema {
-                name: String::new(),
-                body: headers,
-            }
-        } else {
-            DocumentSchema {
-                name: String::new(),
-                body: String::new(),
-            }
-        }
+    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+        let mut reader = csv::Reader::from_path(path).with_context(|| {
+            log_and_return_error_string(format!(
+                "csv_indexer: Failed to read csv from path: {:?}",
+                path
+            ))
+        })?;
+
+        let headers = reader
+            .headers()
+            .with_context(|| {
+                log_and_return_error_string(format!(
+                    "csv_indexer: Failed to get headers from csv at path: {:?}",
+                    path
+                ))
+            })?
+            .iter()
+            .fold(String::new(), |mut acc, x| {
+                acc.push_str(&x);
+                acc.push_str(" ");
+                acc
+            });
+
+        Ok(DocumentSchema {
+            name: String::new(),
+            body: headers,
+        })
     }
 }
 
@@ -42,7 +49,7 @@ mod tests {
     #[test]
     fn test_indexing_csv_file() {
         let test_file_path = Path::new("./test_files/data.csv");
-        let indexed_document = CsvIndexer.index_file(test_file_path);
+        let indexed_document = CsvIndexer.index_file(test_file_path).unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(
