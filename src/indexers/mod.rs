@@ -47,11 +47,11 @@ pub struct Analyzer {
 
 impl Analyzer {
     /// Applies the indexing function of Indexers that support the given extension
-    pub fn analyze(&self, extension: &OsStr, path: &Path) -> Vec<DocumentSchema> {
+    pub fn analyze<P>(&self, extension: &OsStr, path: P) -> Vec<DocumentSchema> where P: AsRef<Path> {
         self.indexers
             .iter()
             .filter(|indexer| indexer.supports_extension(extension))
-            .filter_map(|indexer| indexer.index_file(path).ok())
+            .filter_map(|indexer| indexer.index_file(path.as_ref()).ok())
             .collect()
     }
 }
