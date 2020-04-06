@@ -1,5 +1,6 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 use std::ffi::OsStr;
@@ -15,13 +16,13 @@ impl Indexer for PdfIndexer {
         extension == OsStr::new("pdf")
     }
 
-    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
         // TODO: the resulting string from this is poorly extracted
         // better than nothing but it should be fixed
-        let res = extract_text(path).with_context(|| {
+        let res = extract_text(&file_to_process.path).with_context(|| {
             log_and_return_error_string(format!(
                 "pdf_indexer: Failed to extract text from pdf at path: {:?}",
-                path
+                file_to_process.path
             ))
         })?;
 
@@ -45,7 +46,9 @@ mod tests {
     #[test]
     fn test_indexing_pdf_file() {
         let test_file_path = Path::new("./test_files/Cats.pdf");
-        let indexed_document = PdfIndexer.index_file(test_file_path).unwrap();
+        let indexed_document = PdfIndexer
+            .index_file(&FileToProcess::from(test_file_path))
+            .unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(indexed_document.body, "\n\nCats \n\nThis  is  an  example  document about cats.  \n\n \n\nCats  have  paws.  ");

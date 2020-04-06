@@ -1,5 +1,6 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 use std::ffi::OsStr;
@@ -17,12 +18,14 @@ impl Indexer for PptxIndexer {
         extension == OsStr::new("pptx")
     }
 
-    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
         let mut total_text = String::new();
-        let document = PPTXDocument::from_file(path).expect(&log_and_return_error_string(format!(
-            "pptx_indexer: Failed to open PPTX Document from file at path: {:?}",
-            path
-        )));
+        let document = PPTXDocument::from_file(file_to_process.path.as_path()).expect(
+            &log_and_return_error_string(format!(
+                "pptx_indexer: Failed to open PPTX Document from file at path: {:?}",
+                file_to_process.path
+            )),
+        );
 
         for slide in document.slide_map.values() {
             let shape_group = &(*(*slide.common_slide_data).shape_tree).shape_array;
@@ -85,7 +88,9 @@ mod tests {
     #[test]
     fn test_indexing_pptx_file() {
         let test_file_path = Path::new("./test_files/Cats.pptx");
-        let indexed_document = PptxIndexer.index_file(test_file_path).unwrap();
+        let indexed_document = PptxIndexer
+            .index_file(&FileToProcess::from(test_file_path))
+            .unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert!(indexed_document.body.contains("Cats"));

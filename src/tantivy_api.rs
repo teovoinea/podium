@@ -7,8 +7,8 @@ use tantivy::schema::*;
 use tantivy::DocAddress;
 use tantivy::IndexReader;
 
-use crate::error_adapter::log_and_return_error_string;
 use crate::contracts::file_to_process::FileToProcess;
+use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 
 use blake2b_simd::blake2b;
@@ -219,7 +219,7 @@ pub fn process_file(
     let analyzer = Analyzer::default();
 
     // We're indexing the file for the first time
-    let results = analyzer.analyze(entry_path.extension().unwrap(), entry_path);
+    let results = analyzer.analyze(entry_path.extension().unwrap(), file_to_process);
     if !results.is_empty() {
         info!("This is a new file, we need to process it");
         let title = &results[0].name;

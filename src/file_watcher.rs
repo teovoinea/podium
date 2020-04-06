@@ -1,5 +1,5 @@
-use crate::tantivy_api::*;
 use crate::contracts::file_to_process::FileToProcess;
+use crate::tantivy_api::*;
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
@@ -36,10 +36,20 @@ pub fn start_watcher(
                 info!("Received watcher event: {:?}", event);
                 match event {
                     DebouncedEvent::Create(path_buf) => {
-                        create_event(&FileToProcess::from(path_buf), &schema, &index_reader, &index_writer);
+                        create_event(
+                            &FileToProcess::from(path_buf),
+                            &schema,
+                            &index_reader,
+                            &index_writer,
+                        );
                     }
                     DebouncedEvent::Write(path_buf) => {
-                        write_event(&FileToProcess::from(path_buf), &schema, &index_reader, &index_writer);
+                        write_event(
+                            &FileToProcess::from(path_buf),
+                            &schema,
+                            &index_reader,
+                            &index_writer,
+                        );
                     }
                     DebouncedEvent::NoticeRemove(path_buf) => {
                         remove_event(&path_buf, &schema, &index_reader, &index_writer);
@@ -99,9 +109,7 @@ fn create(
     let file_hash = file_to_process.hash;
 
     // Check if this file has been processed before at a different location
-    if let Some(doc_to_update) =
-        update_existing_file(file_to_process, &schema, &index_reader)
-    {
+    if let Some(doc_to_update) = update_existing_file(file_to_process, &schema, &index_reader) {
         // If it has, add this current location to the document
         // let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
         let (_title, hash_field, _location, _body) = destructure_schema(&schema);
@@ -138,7 +146,12 @@ fn write_event(
         let walker = WalkDir::new(path_buf).into_iter();
         for entry in walker.filter_entry(|e| !is_hidden(e)) {
             let entry = entry.unwrap();
-            write(&FileToProcess::from(entry.into_path()), schema, index_reader, index_writer);
+            write(
+                &FileToProcess::from(entry.into_path()),
+                schema,
+                index_reader,
+                index_writer,
+            );
         }
     } else {
         write(file_to_process, schema, index_reader, index_writer);
@@ -163,9 +176,7 @@ fn write(
     let file_hash = file_to_process.hash;
 
     // Check if this file has been processed before at a different location
-    if let Some(doc_to_update) =
-        update_existing_file(file_to_process, &schema, &index_reader)
-    {
+    if let Some(doc_to_update) = update_existing_file(file_to_process, &schema, &index_reader) {
         // If it has, add this current location to the document
         let (_title, hash_field, _location, _body) = destructure_schema(&schema);
         // Delete the old document

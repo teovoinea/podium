@@ -1,7 +1,7 @@
+use crate::contracts::file_to_process::FileToProcess;
 use crate::file_watcher::*;
 use crate::query_executor::*;
 use crate::tantivy_api::*;
-use crate::contracts::file_to_process::FileToProcess;
 
 use app_dirs::*;
 use config::*;
@@ -103,7 +103,7 @@ pub fn start_tantivy(
                     let file_to_process = FileToProcess {
                         path: entry_path.to_path_buf(),
                         hash: file_hash,
-                        contents: Vec::new()
+                        contents: Vec::new(),
                     };
 
                     // Check if this file has been processed before at a different location
@@ -121,7 +121,9 @@ pub fn start_tantivy(
                         index_writer.add_document(doc_to_update);
                     }
                     // We might not need to add anything if the file already exists
-                    else if let Some(doc_to_add) = process_file(&file_to_process, &schema, &reader) {
+                    else if let Some(doc_to_add) =
+                        process_file(&file_to_process, &schema, &reader)
+                    {
                         index_writer.add_document(doc_to_add);
                     }
                 }

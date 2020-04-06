@@ -1,9 +1,9 @@
 use super::DocumentSchema;
 use super::Indexer;
+use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use std::ffi::OsStr;
 use std::io::Cursor;
-use std::path::Path;
 
 use std::time::Instant;
 
@@ -69,7 +69,7 @@ impl Indexer for MobileNetV2Indexer {
     }
 
     // https://github.com/snipsco/tract/tree/master/examples/tensorflow-mobilenet-v2
-    fn index_file(&self, path: &Path) -> Result<DocumentSchema> {
+    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
         let now = Instant::now();
         let t_model: &ModelImpl<_, _> = &*MODEL;
         let plan = SimplePlan::new(t_model).expect(&log_and_return_error_string(format!(
@@ -82,15 +82,15 @@ impl Indexer for MobileNetV2Indexer {
 
         let now = Instant::now();
         // open image, resize it and make a Tensor out of it
-        let image = image::open(path).with_context(|| {
+        let image = image::load_from_memory(&file_to_process.contents[..]).with_context(|| {
             log_and_return_error_string(format!(
                 "mobile_net_v2_indexer: Failed to open image at path {:?}",
-                path
+                file_to_process.path
             ))
         })?;
 
         info!(
-            "It took {} microseconds to load the image from disk",
+            "It took {} microseconds to load the image from memory",
             now.elapsed().as_micros()
         );
         let now = Instant::now();
@@ -149,12 +149,15 @@ impl Indexer for MobileNetV2Indexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[cfg(not(target_os = "windows"))]
     #[test]
     fn test_indexing_mobile_net_v2_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
-        let indexed_document = MobileNetV2Indexer.index_file(test_file_path).unwrap();
+        let indexed_document = MobileNetV2Indexer
+            .index_file(&FileToProcess::from(test_file_path))
+            .unwrap();
 
         assert_eq!(indexed_document.name, "");
         assert_eq!(indexed_document.body, "eggnog");

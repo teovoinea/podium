@@ -1,7 +1,7 @@
 use crate::tantivy_api::*;
-use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::Read;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct FileToProcess {
@@ -19,11 +19,10 @@ impl From<&Path> for FileToProcess {
         FileToProcess {
             path: path.to_path_buf(),
             hash: get_file_hash(path).unwrap(),
-            contents: contents
+            contents: contents,
         }
     }
 }
-
 
 impl From<PathBuf> for FileToProcess {
     fn from(path: PathBuf) -> Self {
@@ -35,7 +34,7 @@ impl From<PathBuf> for FileToProcess {
         FileToProcess {
             path: path,
             hash: hash,
-            contents: contents
+            contents: contents,
         }
     }
 }
