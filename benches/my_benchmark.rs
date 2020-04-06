@@ -2,8 +2,8 @@
 extern crate criterion;
 extern crate podium_lib;
 
-use podium_lib::indexers::*;
 use podium_lib::contracts::file_to_process::FileToProcess;
+use podium_lib::indexers::*;
 
 use criterion::black_box;
 use criterion::Criterion;
