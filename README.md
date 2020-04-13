@@ -10,7 +10,7 @@ Podium is a smart indexer and searcher for your files.
 A search engine doesn't expect you to know the name of the website you're searching for, you only search for the content and it does the work of finding the website.
 Podium is the same, you don't need to know the name of the file you're looking for, or where you saved it. You only need to know what it's about. Podium does the work of figuring out where it is.
 
-Pdoium doesn't interfere with how you already organize your files, but it can help you when you're stuck.
+Podium doesn't interfere with how you already organize your files, but it can help you when you're stuck.
 
 ## Features
 
