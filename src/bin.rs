@@ -17,7 +17,7 @@ use crossbeam::channel::{unbounded, Receiver, Sender};
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
-    simple_logger::init().unwrap();
+    simple_logger::init_with_level(log::Level::Info).unwrap();
     let (query_tx, query_rx): (Sender<String>, Receiver<String>) = unbounded();
     let (result_tx, result_rx): (Sender<QueryResponse>, Receiver<QueryResponse>) = unbounded();
     let tantivy_query_tx = query_tx.clone();

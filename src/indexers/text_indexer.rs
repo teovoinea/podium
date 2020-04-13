@@ -3,7 +3,7 @@ use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::Path;
 use std::str;
@@ -13,6 +13,10 @@ pub struct TextIndexer;
 impl Indexer for TextIndexer {
     fn supports_extension(&self, extension: &OsStr) -> bool {
         extension == OsStr::new("txt")
+    }
+
+    fn supported_extensions(&self) -> Vec<OsString> {
+        vec![OsString::from("txt")]
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {

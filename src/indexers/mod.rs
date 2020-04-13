@@ -18,7 +18,9 @@ pub use self::csv_indexer::CsvIndexer;
 pub use self::pptx_indexer::PptxIndexer;
 pub use self::spreadsheet_indexer::SpreadsheetIndexer;
 
-use std::ffi::OsStr;
+use std::collections::HashSet;
+use std::ffi::{OsStr, OsString};
+use std::iter::FromIterator;
 use std::path::Path;
 
 use anyhow::Result;
@@ -40,11 +42,14 @@ pub trait Indexer {
 
     /// The logic behind the Indexer to extract information from a file
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema>;
+
+    fn supported_extensions(&self) -> Vec<OsString>;
 }
 
 /// Container for all Indexers
 pub struct Analyzer {
     pub indexers: Vec<Box<dyn Indexer>>,
+    pub supported_extensions: HashSet<OsString>,
 }
 
 impl Analyzer {
@@ -65,30 +70,50 @@ impl Analyzer {
 impl Default for Analyzer {
     #[cfg(not(target_os = "windows"))]
     fn default() -> Analyzer {
+        let indexers: Vec<Box<dyn Indexer>> = vec![
+            Box::new(TextIndexer),
+            Box::new(ExifIndexer),
+            Box::new(PdfIndexer),
+            Box::new(MobileNetV2Indexer),
+            Box::new(PptxIndexer),
+            Box::new(CsvIndexer),
+            Box::new(SpreadsheetIndexer),
+        ];
+
+        let supported_extensions = HashSet::from_iter(
+            indexers
+                .iter()
+                .map(|indexer| indexer.supported_extensions())
+                .flatten(),
+        );
+
         Analyzer {
-            indexers: vec![
-                Box::new(TextIndexer),
-                Box::new(ExifIndexer),
-                Box::new(PdfIndexer),
-                Box::new(MobileNetV2Indexer),
-                Box::new(PptxIndexer),
-                Box::new(CsvIndexer),
-                Box::new(SpreadsheetIndexer),
-            ],
+            indexers: indexers,
+            supported_extensions: supported_extensions,
         }
     }
 
     #[cfg(target_os = "windows")]
     fn default() -> Analyzer {
+        let indexers: Vec<Box<dyn Indexer>> = vec![
+            Box::new(TextIndexer),
+            Box::new(ExifIndexer),
+            Box::new(PdfIndexer),
+            Box::new(PptxIndexer),
+            Box::new(CsvIndexer),
+            Box::new(SpreadsheetIndexer),
+        ];
+
+        let supported_extensions = HashSet::from_iter(
+            indexers
+                .iter()
+                .map(|indexer| indexer.supported_extensions())
+                .flatten(),
+        );
+
         Analyzer {
-            indexers: vec![
-                Box::new(TextIndexer),
-                Box::new(ExifIndexer),
-                Box::new(PdfIndexer),
-                Box::new(PptxIndexer),
-                Box::new(CsvIndexer),
-                Box::new(SpreadsheetIndexer),
-            ],
+            indexers: indexers,
+            supported_extensions: supported_extensions,
         }
     }
 }
