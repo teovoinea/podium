@@ -3,7 +3,7 @@ use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::path::Path;
 
 use msoffice_pptx::document::PPTXDocument;
@@ -16,6 +16,10 @@ pub struct PptxIndexer;
 impl Indexer for PptxIndexer {
     fn supports_extension(&self, extension: &OsStr) -> bool {
         extension == OsStr::new("pptx")
+    }
+
+    fn supported_extensions(&self) -> Vec<OsString> {
+        vec![OsString::from("pptx")]
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {

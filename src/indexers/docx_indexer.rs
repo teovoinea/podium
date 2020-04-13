@@ -1,7 +1,7 @@
 use super::Indexer;
 use super::DocumentSchema;
 use std::path::Path;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 
 use docx::prelude::*;
@@ -11,6 +11,10 @@ pub struct DocxIndexer;
 impl Indexer for DocxIndexer {
     fn supports_extension(&self, extension: &OsStr) -> bool {
         extension == OsStr::new("docx")
+    }
+
+    fn supported_extensions(self) -> Vec<OsString> {
+        vec![OsString::from("docx")]
     }
 
     // Parsing Cats.docx panics the `docx` library...

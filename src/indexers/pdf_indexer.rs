@@ -3,7 +3,7 @@ use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::path::Path;
 
 use pdf_extract::*;
@@ -14,6 +14,10 @@ pub struct PdfIndexer;
 impl Indexer for PdfIndexer {
     fn supports_extension(&self, extension: &OsStr) -> bool {
         extension == OsStr::new("pdf")
+    }
+
+    fn supported_extensions(&self) -> Vec<OsString> {
+        vec![OsString::from("pdf")]
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {

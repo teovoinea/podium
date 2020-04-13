@@ -1,5 +1,6 @@
 use crate::contracts::file_to_process::FileToProcess;
 use crate::file_watcher::*;
+use crate::indexers::Analyzer;
 use crate::query_executor::*;
 use crate::tantivy_api::*;
 
@@ -78,6 +79,7 @@ pub fn start_tantivy(
         .try_into()?;
 
     let mut index_writer = index.writer(50_000_000)?;
+    let analyzer = Analyzer::default();
 
     if !initial_processing_file.exists() {
         info!("Initial processing was not previously done, doing now");
@@ -94,6 +96,16 @@ pub fn start_tantivy(
                 let entry = entry.unwrap();
                 if !entry.file_type().is_dir() {
                     let entry_path = entry.path();
+
+                    match entry_path.extension() {
+                        None => continue,
+                        Some(extension) => {
+                            if !analyzer.supported_extensions.contains(extension) {
+                                continue;
+                            }
+                        }
+                    }
+
                     let file_hash = if let Ok(f_h) = get_file_hash(entry_path) {
                         f_h
                     } else {

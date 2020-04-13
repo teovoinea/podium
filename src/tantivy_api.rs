@@ -145,7 +145,7 @@ pub fn get_file_hash(entry_path: &Path) -> Result<blake2b_simd::Hash> {
         ))
     })?;
     file_hash = blake2b(file_buffer.as_slice());
-    trace!("Hash of file is: {:?}", file_hash);
+    info!("Hash of file is: {:?}", file_hash);
     Ok(file_hash)
 }
 
@@ -202,14 +202,14 @@ pub fn process_file(
     let entry_path = &file_to_process.path;
     let file_hash = file_to_process.hash;
     if entry_path.extension() == None {
-        trace!("Skipping, no file extension: {:?}", entry_path);
+        info!("Skipping, no file extension: {:?}", entry_path);
         return None;
     }
 
     let location_facet = &entry_path.to_facet_value();
 
-    trace!("Processing: {:?}", entry_path);
-    trace!("Hash of file is: {:?}", file_hash);
+    info!("Processing: {:?}", entry_path);
+    info!("Hash of file is: {:?}", file_hash);
 
     // Check if the file has already been indexed
     if let Some(doc) = update_existing_file(file_to_process, &schema, &index_reader) {
@@ -239,10 +239,7 @@ pub fn process_file(
         new_doc.add_text(body_field, &body);
         return Some(new_doc);
     } else {
-        info!(
-            "Couldn't find any indexers for file with extension: {}",
-            entry_path.extension().unwrap().to_str().unwrap()
-        );
+        info!("Couldn't find any results for file at: {:?}", entry_path);
     }
 
     None

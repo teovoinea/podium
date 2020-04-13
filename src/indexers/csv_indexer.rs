@@ -3,7 +3,7 @@ use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::io::Cursor;
 
 pub struct CsvIndexer;
@@ -11,6 +11,10 @@ pub struct CsvIndexer;
 impl Indexer for CsvIndexer {
     fn supports_extension(&self, extension: &OsStr) -> bool {
         extension == OsStr::new("csv")
+    }
+
+    fn supported_extensions(&self) -> Vec<OsString> {
+        vec![OsString::from("csv")]
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
