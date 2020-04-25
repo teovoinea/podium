@@ -21,15 +21,15 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
 
-  # crates_io:
-  #   name: Publish crate to crates.io
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@master
-  #     - name: Cargo login
-  #       run: cargo login ${{ secrets.CARGO_LOGIN_KEY }}
-  #     - name: Cargo publish
-  #       run: cargo publish
+  crates_io:
+    name: Publish crate to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Cargo login
+        run: cargo login ${{ secrets.CARGO_LOGIN_KEY }}
+      - name: Cargo publish
+        run: cargo publish
 
   build:
     name: Build ${{ matrix.os }} release binaries of podium
