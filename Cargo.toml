@@ -41,7 +41,7 @@ async-trait = "0.1.35"
 # paperclip = { version = "0.3.0", features = ["actix"] }
 
 [target."cfg(not(windows))".dependencies]
-tract-tensorflow = "0.6.1"
+tract-tensorflow = "0.8.0"
 tract-core = "0.6.1"
 
 [dev-dependencies]
