@@ -28,7 +28,7 @@ async fn main() -> io::Result<()> {
     let tantivy_thread = tokio::spawn(async move {
         start_tantivy((tantivy_query_tx, query_rx), result_tx).await;
     });
-    
+
     let sys = actix_rt::System::run_in_tokio("server", &local);
 
     let app_state = web::Data::new(AppState {
