@@ -1,7 +1,6 @@
 use crate::tantivy_api::*;
-use std::fs::File;
-use std::io::Read;
 use std::path::{Path, PathBuf};
+use tokio::fs;
 
 #[derive(Debug, Clone)]
 pub struct FileToProcess {
@@ -10,31 +9,13 @@ pub struct FileToProcess {
     pub contents: Vec<u8>,
 }
 
-impl From<&Path> for FileToProcess {
-    fn from(path: &Path) -> Self {
-        let mut contents = Vec::new();
-        let mut file = File::open(path).unwrap();
-        file.read_to_end(&mut contents).unwrap();
+pub async fn newFileToProcess<T: AsRef<Path>>(path: T) -> FileToProcess {
+    let contents = fs::read(&path).await.unwrap();
+    let hash = calculate_hash(&contents);
 
-        FileToProcess {
-            path: path.to_path_buf(),
-            hash: get_file_hash(path).unwrap(),
-            contents: contents,
-        }
-    }
-}
-
-impl From<PathBuf> for FileToProcess {
-    fn from(path: PathBuf) -> Self {
-        let hash = get_file_hash(&path).unwrap();
-        let mut contents = Vec::new();
-        let mut file = File::open(&path).unwrap();
-        file.read_to_end(&mut contents).unwrap();
-
-        FileToProcess {
-            path: path,
-            hash: hash,
-            contents: contents,
-        }
+    FileToProcess {
+        path: PathBuf::from(path.as_ref()),
+        hash: hash,
+        contents: contents,
     }
 }

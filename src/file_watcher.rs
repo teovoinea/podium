@@ -1,4 +1,4 @@
-use crate::contracts::file_to_process::FileToProcess;
+use crate::contracts::file_to_process::{newFileToProcess, FileToProcess};
 use crate::tantivy_api::*;
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
@@ -15,7 +15,7 @@ use std::time::Duration;
 /// Starts the file watcher thread
 /// Reacts to document changes (create/update/delete)
 /// Does appropriate housekeeping for documents (eg: removing old documents after update)
-pub fn start_watcher(
+pub async fn start_watcher(
     directories: Vec<String>,
     index_writer: Sender<WriterAction>,
     schema: Schema,
@@ -31,13 +31,14 @@ pub fn start_watcher(
     }
 
     loop {
-        match watcher_rx.recv() {
+        let watcher_event = watcher_rx.recv();
+        match watcher_event {
             Ok(event) => {
                 info!("Received watcher event: {:?}", event);
                 match event {
                     DebouncedEvent::Create(path_buf) => {
                         create_event(
-                            &FileToProcess::from(path_buf),
+                            &newFileToProcess(path_buf).await,
                             &schema,
                             &index_reader,
                             &index_writer,
@@ -45,7 +46,7 @@ pub fn start_watcher(
                     }
                     DebouncedEvent::Write(path_buf) => {
                         write_event(
-                            &FileToProcess::from(path_buf),
+                            &newFileToProcess(path_buf).await,
                             &schema,
                             &index_reader,
                             &index_writer,
@@ -133,7 +134,7 @@ fn create(
 /// Handles a write event from watch_dir
 /// If a folder is written, recursively process all files in the folder
 /// Otherwise process the single file which was written
-fn write_event(
+async fn write_event(
     file_to_process: &FileToProcess,
     schema: &Schema,
     index_reader: &IndexReader,
@@ -147,7 +148,7 @@ fn write_event(
         for entry in walker.filter_entry(|e| !is_hidden(e)) {
             let entry = entry.unwrap();
             write(
-                &FileToProcess::from(entry.into_path()),
+                &newFileToProcess(path_buf).await,
                 schema,
                 index_reader,
                 index_writer,

@@ -45,13 +45,14 @@ impl Indexer for CsvIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::contracts::file_to_process::newFileToProcess;
     use std::path::Path;
 
-    #[test]
-    fn test_indexing_csv_file() {
+    #[tokio::test(core_threads = 1)]
+    async fn test_indexing_csv_file() {
         let test_file_path = Path::new("./test_files/data.csv");
         let indexed_document = CsvIndexer
-            .index_file(&FileToProcess::from(test_file_path))
+            .index_file(&newFileToProcess(test_file_path).await)
             .unwrap();
 
         assert_eq!(indexed_document.name, "");

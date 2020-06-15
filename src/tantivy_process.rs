@@ -28,7 +28,7 @@ const APP_INFO: AppInfo = AppInfo {
 /// Starts reader thread
 /// Owns tantivy's index_writer so it's able to write/delete documents
 /// TODO: This function does too much? Should break it up
-pub fn start_tantivy(
+pub async fn start_tantivy(
     query_channel: (Sender<String>, Receiver<String>),
     result_tx: Sender<QueryResponse>,
 ) -> tantivy::Result<()> {
@@ -148,16 +148,20 @@ pub fn start_tantivy(
         info!("Initial processing already done! Starting a reader");
     }
 
-    let _watcher_thread = thread::Builder::new()
-        .name("file_watcher_thread".to_string())
-        .spawn(|| {
-            start_watcher(
-                directories_clone,
-                watcher_index_writer,
-                watcher_schema,
-                watcher_reader,
-            )
-        });
+    let _watcher_thread = tokio::spawn(async move {
+        start_watcher(
+            directories_clone,
+            watcher_index_writer,
+            watcher_schema,
+            watcher_reader,
+        )
+        .await;
+    });
+    //  thread::Builder::new()
+    //     .name("file_watcher_thread".to_string())
+    //     .spawn(|| {
+
+    //     });
 
     let reader_schema = schema.clone();
 

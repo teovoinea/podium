@@ -46,12 +46,13 @@ impl Indexer for PdfIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::contracts::file_to_process::newFileToProcess;
 
-    #[test]
-    fn test_indexing_pdf_file() {
+    #[tokio::test(core_threads = 1)]
+    async fn test_indexing_pdf_file() {
         let test_file_path = Path::new("./test_files/Cats.pdf");
         let indexed_document = PdfIndexer
-            .index_file(&FileToProcess::from(test_file_path))
+            .index_file(&newFileToProcess(test_file_path).await)
             .unwrap();
 
         assert_eq!(indexed_document.name, "");

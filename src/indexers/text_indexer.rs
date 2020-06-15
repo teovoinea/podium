@@ -48,12 +48,13 @@ impl Indexer for TextIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::contracts::file_to_process::newFileToProcess;
 
-    #[test]
-    fn test_indexing_text_file() {
+    #[tokio::test(core_threads = 1)]
+    async fn test_indexing_text_file() {
         let test_file_path = Path::new("./test_files/file.txt");
         let indexed_document = TextIndexer
-            .index_file(&FileToProcess::from(test_file_path))
+            .index_file(&newFileToProcess(test_file_path).await)
             .unwrap();
 
         assert_eq!(indexed_document.name, "file.txt");

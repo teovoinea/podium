@@ -102,13 +102,14 @@ fn def_to_dec_dec(deg: f64, min: f64, sec: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::contracts::file_to_process::newFileToProcess;
     use std::path::Path;
 
-    #[test]
-    fn test_indexing_text_file() {
+    #[tokio::test(core_threads = 1)]
+    async fn test_indexing_text_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
         let indexed_document = ExifIndexer
-            .index_file(&FileToProcess::from(test_file_path))
+            .index_file(&newFileToProcess(test_file_path).await)
             .unwrap();
 
         assert_eq!(indexed_document.name, "");
