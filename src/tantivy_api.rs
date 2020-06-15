@@ -149,6 +149,12 @@ pub fn get_file_hash(entry_path: &Path) -> Result<blake2b_simd::Hash> {
     Ok(file_hash)
 }
 
+pub fn calculate_hash(input: &[u8]) -> blake2b_simd::Hash {
+    let file_hash = blake2b(input);
+    info!("Hash of file is: {:?}", file_hash);
+    file_hash
+}
+
 /// If a document with the same file hash already exists, we can avoid processing it again
 /// In that case, if this file is found in a new location, add that location to the facet list
 /// eg: if we have 2 files A and B with the same content

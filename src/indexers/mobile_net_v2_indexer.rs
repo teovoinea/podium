@@ -195,14 +195,15 @@ impl Indexer for MobileNetV2Indexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::contracts::file_to_process::newFileToProcess;
     use std::path::Path;
 
     #[cfg(not(target_os = "windows"))]
-    #[test]
-    fn test_indexing_mobile_net_v2_file() {
+    #[tokio::test(core_threads = 1)]
+    async fn test_indexing_mobile_net_v2_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
         let indexed_document = MobileNetV2Indexer
-            .index_file(&FileToProcess::from(test_file_path))
+            .index_file(&newFileToProcess(test_file_path).await)
             .unwrap();
 
         assert_eq!(indexed_document.name, "");
