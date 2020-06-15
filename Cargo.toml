@@ -45,7 +45,7 @@ tract-tensorflow = "0.6.1"
 tract-core = "0.6.1"
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = "0.3"
 
 [lib]
 name = "podium_lib"
