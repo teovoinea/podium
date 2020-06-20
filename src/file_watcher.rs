@@ -1,4 +1,4 @@
-use crate::contracts::file_to_process::{newFileToProcess, FileToProcess};
+use crate::contracts::file_to_process::{new_file_to_process, FileToProcess};
 use crate::tantivy_api::*;
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
@@ -37,20 +37,10 @@ pub async fn start_watcher(
                 info!("Received watcher event: {:?}", event);
                 match event {
                     DebouncedEvent::Create(path_buf) => {
-                        create_event(
-                            &newFileToProcess(path_buf).await,
-                            &schema,
-                            &index_reader,
-                            &index_writer,
-                        );
+                        create_event(path_buf, &schema, &index_reader, &index_writer).await;
                     }
                     DebouncedEvent::Write(path_buf) => {
-                        write_event(
-                            &newFileToProcess(path_buf).await,
-                            &schema,
-                            &index_reader,
-                            &index_writer,
-                        );
+                        write_event(path_buf, &schema, &index_reader, &index_writer).await;
                     }
                     DebouncedEvent::NoticeRemove(path_buf) => {
                         remove_event(&path_buf, &schema, &index_reader, &index_writer);
@@ -78,39 +68,51 @@ pub async fn start_watcher(
 /// Handles a create event from watch_dir
 /// If a folder is created, recursively process all files in the folder
 /// Otherwise process the single new file which was created
-fn create_event(
-    file_to_process: &FileToProcess,
+async fn create_event(
+    path_buf: PathBuf,
     schema: &Schema,
     index_reader: &IndexReader,
     index_writer: &Sender<WriterAction>,
 ) {
-    let path_buf = &file_to_process.path;
     if path_buf.is_dir() {
         // Traverse through all the files in the directory
         let walker = WalkDir::new(path_buf).into_iter();
         for entry in walker.filter_entry(|e| !is_hidden(e)) {
             let entry = entry.unwrap();
-            create(file_to_process, schema, index_reader, index_writer);
+            create(
+                new_file_to_process(entry.into_path()).await,
+                schema,
+                index_reader,
+                index_writer,
+            )
+            .await;
         }
     } else {
-        create(file_to_process, schema, index_reader, index_writer);
+        create(
+            new_file_to_process(path_buf).await,
+            schema,
+            index_reader,
+            index_writer,
+        )
+        .await;
     }
 }
 
 /// Processes a newly created file
 /// If the hash has been seen before, skip processing and simply add the new location to the tantivy document
 /// Otherwise process the file and create the new document
-fn create(
-    file_to_process: &FileToProcess,
+async fn create(
+    file_to_process: FileToProcess,
     schema: &Schema,
     index_reader: &IndexReader,
     index_writer: &Sender<WriterAction>,
 ) {
-    let path_buf = &file_to_process.path;
+    let path_buf = file_to_process.path.clone();
+    let path = path_buf.as_path();
     let file_hash = file_to_process.hash;
 
     // Check if this file has been processed before at a different location
-    if let Some(doc_to_update) = update_existing_file(file_to_process, &schema, &index_reader) {
+    if let Some(doc_to_update) = update_existing_file(path, &file_hash, &schema, &index_reader) {
         // If it has, add this current location to the document
         // let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
         let (_title, hash_field, _location, _body) = destructure_schema(&schema);
@@ -126,7 +128,7 @@ fn create(
         index_writer.send(WriterAction::Add(doc_to_update)).unwrap();
     }
     // We might not need to add anything if the file already exists
-    else if let Some(doc_to_add) = process_file(file_to_process, &schema, &index_reader) {
+    else if let Some(doc_to_add) = process_file(file_to_process, &schema, &index_reader).await {
         index_writer.send(WriterAction::Add(doc_to_add)).unwrap();
     }
 }
@@ -135,12 +137,11 @@ fn create(
 /// If a folder is written, recursively process all files in the folder
 /// Otherwise process the single file which was written
 async fn write_event(
-    file_to_process: &FileToProcess,
+    path_buf: PathBuf,
     schema: &Schema,
     index_reader: &IndexReader,
     index_writer: &Sender<WriterAction>,
 ) {
-    let path_buf = &file_to_process.path;
     // Remove the old document, reprocess and add the new content
     if path_buf.is_dir() {
         // Traverse through all the files in the directory
@@ -148,14 +149,21 @@ async fn write_event(
         for entry in walker.filter_entry(|e| !is_hidden(e)) {
             let entry = entry.unwrap();
             write(
-                &newFileToProcess(path_buf).await,
+                new_file_to_process(entry.into_path()).await,
                 schema,
                 index_reader,
                 index_writer,
-            );
+            )
+            .await;
         }
     } else {
-        write(file_to_process, schema, index_reader, index_writer);
+        write(
+            new_file_to_process(path_buf).await,
+            schema,
+            index_reader,
+            index_writer,
+        )
+        .await;
     }
 }
 
@@ -163,13 +171,14 @@ async fn write_event(
 /// Removes the old document related to the file
 /// Reprocesses the file
 /// Writes a new document
-fn write(
-    file_to_process: &FileToProcess,
+async fn write(
+    file_to_process: FileToProcess,
     schema: &Schema,
     index_reader: &IndexReader,
     index_writer: &Sender<WriterAction>,
 ) {
-    let path_buf = &file_to_process.path;
+    let path_buf = file_to_process.path.clone();
+    let path = path_buf.as_path();
 
     // Remove the old document
     remove(&path_buf, schema, index_reader, index_writer);
@@ -177,7 +186,7 @@ fn write(
     let file_hash = file_to_process.hash;
 
     // Check if this file has been processed before at a different location
-    if let Some(doc_to_update) = update_existing_file(file_to_process, &schema, &index_reader) {
+    if let Some(doc_to_update) = update_existing_file(path, &file_hash, &schema, &index_reader) {
         // If it has, add this current location to the document
         let (_title, hash_field, _location, _body) = destructure_schema(&schema);
         // Delete the old document
@@ -192,7 +201,7 @@ fn write(
         index_writer.send(WriterAction::Add(doc_to_update)).unwrap();
     }
     // We might not need to add anything if the file already exists
-    else if let Some(doc_to_add) = process_file(file_to_process, &schema, &index_reader) {
+    else if let Some(doc_to_add) = process_file(file_to_process, &schema, &index_reader).await {
         index_writer.send(WriterAction::Add(doc_to_add)).unwrap();
     }
 }

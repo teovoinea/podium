@@ -57,13 +57,13 @@ impl Indexer for SpreadsheetIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contracts::file_to_process::newFileToProcess;
+    use crate::contracts::file_to_process::new_file_to_process;
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_spreadsheet_file() {
         let test_file_path = Path::new("./test_files/Cats.xlsx");
         let indexed_document = SpreadsheetIndexer
-            .index_file(&newFileToProcess(test_file_path).await)
+            .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
 
         assert_eq!(indexed_document.name, "");

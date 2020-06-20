@@ -21,9 +21,9 @@ pub use self::spreadsheet_indexer::SpreadsheetIndexer;
 use std::collections::HashSet;
 use std::ffi::{OsStr, OsString};
 use std::iter::FromIterator;
-use std::path::Path;
 
 use anyhow::Result;
+use once_cell::sync::Lazy;
 
 use crate::contracts::file_to_process::FileToProcess;
 
@@ -35,7 +35,7 @@ pub struct DocumentSchema {
 }
 
 /// Each Indexer needs to be able to say if a file extension is supported and extract information from a supported file
-pub trait Indexer {
+pub trait Indexer: Send + Sync {
     /// If the Indexer supports a file extension
     /// Eg: PdfIndexer supports .pdf extensions
     fn supports_extension(&self, extension: &OsStr) -> bool;
@@ -48,23 +48,7 @@ pub trait Indexer {
 
 /// Container for all Indexers
 pub struct Analyzer {
-    pub indexers: Vec<Box<dyn Indexer>>,
     pub supported_extensions: HashSet<OsString>,
-}
-
-impl Analyzer {
-    /// Applies the indexing function of Indexers that support the given extension
-    pub fn analyze(
-        &self,
-        extension: &OsStr,
-        file_to_process: &FileToProcess,
-    ) -> Vec<DocumentSchema> {
-        self.indexers
-            .iter()
-            .filter(|indexer| indexer.supports_extension(extension))
-            .filter_map(|indexer| indexer.index_file(file_to_process).ok())
-            .collect()
-    }
 }
 
 impl Default for Analyzer {
@@ -88,7 +72,6 @@ impl Default for Analyzer {
         );
 
         Analyzer {
-            indexers: indexers,
             supported_extensions: supported_extensions,
         }
     }
@@ -112,8 +95,47 @@ impl Default for Analyzer {
         );
 
         Analyzer {
-            indexers: indexers,
             supported_extensions: supported_extensions,
         }
     }
+}
+
+#[cfg(not(target_os = "windows"))]
+static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
+    let indexers: Vec<Box<dyn Indexer>> = vec![
+        Box::new(TextIndexer),
+        Box::new(ExifIndexer),
+        Box::new(PdfIndexer),
+        Box::new(MobileNetV2Indexer),
+        Box::new(PptxIndexer),
+        Box::new(CsvIndexer),
+        Box::new(SpreadsheetIndexer),
+    ];
+    indexers
+});
+
+#[cfg(target_os = "windows")]
+static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
+    let indexers: Vec<Box<dyn Indexer>> = vec![
+        Box::new(TextIndexer),
+        Box::new(ExifIndexer),
+        Box::new(PdfIndexer),
+        Box::new(MobileNetV2Indexer),
+        Box::new(PptxIndexer),
+        Box::new(CsvIndexer),
+        Box::new(SpreadsheetIndexer),
+    ];
+    indexers
+});
+
+pub async fn analyze(extension: OsString, file_to_process: FileToProcess) -> Vec<DocumentSchema> {
+    let processing_task = tokio::spawn(async move {
+        INDEXERS
+            .iter()
+            .filter(|indexer| indexer.supports_extension(extension.as_os_str()))
+            .filter_map(|indexer| indexer.index_file(&file_to_process).ok())
+            .collect()
+    });
+
+    processing_task.await.unwrap()
 }

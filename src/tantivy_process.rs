@@ -1,4 +1,4 @@
-use crate::contracts::file_to_process::FileToProcess;
+use crate::contracts::file_to_process::{new_file_to_process, FileToProcess};
 use crate::file_watcher::*;
 use crate::indexers::Analyzer;
 use crate::query_executor::*;
@@ -112,15 +112,11 @@ pub async fn start_tantivy(
                         continue;
                     };
 
-                    let file_to_process = FileToProcess {
-                        path: entry_path.to_path_buf(),
-                        hash: file_hash,
-                        contents: Vec::new(),
-                    };
+                    let file_to_process = new_file_to_process(entry_path).await;
 
                     // Check if this file has been processed before at a different location
                     if let Some(doc_to_update) =
-                        update_existing_file(&file_to_process, &schema, &reader)
+                        update_existing_file(entry_path, &file_hash, &schema, &reader)
                     {
                         // If it has, add this current location to the document
                         let (_title, hash_field, _location, _body) = destructure_schema(&schema);
@@ -134,7 +130,7 @@ pub async fn start_tantivy(
                     }
                     // We might not need to add anything if the file already exists
                     else if let Some(doc_to_add) =
-                        process_file(&file_to_process, &schema, &reader)
+                        process_file(file_to_process, &schema, &reader).await
                     {
                         index_writer.add_document(doc_to_add);
                     }
