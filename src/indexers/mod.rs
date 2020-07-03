@@ -120,7 +120,6 @@ static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
         Box::new(TextIndexer),
         Box::new(ExifIndexer),
         Box::new(PdfIndexer),
-        Box::new(MobileNetV2Indexer),
         Box::new(PptxIndexer),
         Box::new(CsvIndexer),
         Box::new(SpreadsheetIndexer),
