@@ -9,7 +9,7 @@ pub struct FileToProcess {
     pub contents: Vec<u8>,
 }
 
-pub async fn newFileToProcess<T: AsRef<Path>>(path: T) -> FileToProcess {
+pub async fn new_file_to_process<T: AsRef<Path>>(path: T) -> FileToProcess {
     let contents = fs::read(&path).await.unwrap();
     let hash = calculate_hash(&contents);
 

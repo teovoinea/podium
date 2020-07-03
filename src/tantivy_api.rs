@@ -162,12 +162,11 @@ pub fn calculate_hash(input: &[u8]) -> blake2b_simd::Hash {
 /// We will see B has the same hash as A
 /// Instead of reprocessing B, we add /path/to/B to the list of locations
 pub fn update_existing_file(
-    file_to_process: &FileToProcess,
+    entry_path: &Path,
+    hash: &blake2b_simd::Hash,
     schema: &Schema,
     index_reader: &IndexReader,
 ) -> Option<Document> {
-    let entry_path = &file_to_process.path;
-    let hash = file_to_process.hash;
     let searcher = index_reader.searcher();
     let location_facet = &entry_path.to_facet_value();
     let (_title, hash_field, location, _body) = destructure_schema(schema);
@@ -200,12 +199,13 @@ pub fn update_existing_file(
 
 /// Processes a file by running all available indexers on it
 /// Updates an existing entry if necessary
-pub fn process_file(
-    file_to_process: &FileToProcess,
+pub async fn process_file(
+    file_to_process: FileToProcess,
     schema: &Schema,
     index_reader: &IndexReader,
 ) -> Option<Document> {
-    let entry_path = &file_to_process.path;
+    let entry_path = file_to_process.path.clone();
+    let path = entry_path.as_path();
     let file_hash = file_to_process.hash;
     if entry_path.extension() == None {
         info!("Skipping, no file extension: {:?}", entry_path);
@@ -218,14 +218,16 @@ pub fn process_file(
     info!("Hash of file is: {:?}", file_hash);
 
     // Check if the file has already been indexed
-    if let Some(doc) = update_existing_file(file_to_process, &schema, &index_reader) {
+    if let Some(doc) = update_existing_file(path, &file_to_process.hash, &schema, &index_reader) {
         return Some(doc);
     }
 
-    let analyzer = Analyzer::default();
-
     // We're indexing the file for the first time
-    let results = analyzer.analyze(entry_path.extension().unwrap(), file_to_process);
+    let results = analyze(
+        entry_path.extension().unwrap().to_os_string(),
+        file_to_process,
+    )
+    .await;
     if !results.is_empty() {
         info!("This is a new file, we need to process it");
         let title = &results[0].name;
