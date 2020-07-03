@@ -129,7 +129,7 @@ static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
 });
 
 pub async fn analyze(extension: OsString, file_to_process: FileToProcess) -> Vec<DocumentSchema> {
-    let processing_task = tokio::spawn(async move {
+    let processing_task = tokio::spawn_blocking(async move {
         INDEXERS
             .iter()
             .filter(|indexer| indexer.supports_extension(extension.as_os_str()))
