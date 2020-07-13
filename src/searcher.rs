@@ -5,8 +5,7 @@ use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::IndexReader;
 
-use crate::path_facet_convert::TantivyConvert;
-use crate::tantivy_wrapper::destructure_schema;
+use crate::custom_tantivy::{path_facet_convert::TantivyConvert, utils::destructure_schema};
 
 use std::path::*;
 

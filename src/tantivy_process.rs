@@ -1,8 +1,8 @@
 use crate::contracts::file_to_process::new_file_to_process;
+use crate::custom_tantivy::{utils::build_schema, wrapper::*};
 use crate::file_watcher::*;
 use crate::indexers::Analyzer;
 use crate::searcher::Searcher;
-use crate::tantivy_wrapper::*;
 
 use tantivy::directory::*;
 use tantivy::{Index, ReloadPolicy};
@@ -11,12 +11,9 @@ use walkdir::WalkDir;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-/// Starts tantivy thread
-/// Starts file watcher thread
-/// Does initial file processing
-/// Starts reader thread
-/// Owns tantivy's index_writer so it's able to write/delete documents
-/// TODO: This function does too much? Should break it up
+/// Starts watching directories
+/// Does initial processing
+/// Consumes watcher events to continue processing files
 pub async fn start_tantivy(
     settings: HashMap<String, Vec<String>>,
     tantivy_wrapper: &mut TantivyWrapper,

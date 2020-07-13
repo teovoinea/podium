@@ -8,11 +8,11 @@ use crate::contracts::file_to_process::FileToProcess;
 use crate::indexers::*;
 
 use async_trait::async_trait;
-use blake2b_simd::blake2b;
+use blake2b_simd;
 
 use std::path::{Path, PathBuf};
 
-use crate::path_facet_convert::*;
+use crate::custom_tantivy::{path_facet_convert::*, utils::destructure_schema};
 
 pub struct TantivyWrapper {
     pub index_reader: IndexReader,
@@ -260,15 +260,6 @@ impl FileProcessor for TantivyWrapper {
     }
 }
 
-pub fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
-    (
-        schema.get_field("title").unwrap(),
-        schema.get_field("hash").unwrap(),
-        schema.get_field("location").unwrap(),
-        schema.get_field("body").unwrap(),
-    )
-}
-
 /// Takes a default new doc, adds the values from old doc, but uses a different set of locations
 /// Used when removing 1 location from a list of locations
 fn new_doc_for_update(
@@ -301,25 +292,4 @@ fn new_doc_for_update(
     for body_value in old_doc.get_all(body) {
         new_doc.add_text(body, body_value.text().unwrap());
     }
-}
-
-/// Builds the tantivy schema
-pub fn build_schema() -> Schema {
-    let mut schema_builder = Schema::builder();
-
-    schema_builder.add_text_field("title", TEXT | STORED);
-
-    schema_builder.add_text_field("hash", STRING | STORED);
-
-    schema_builder.add_facet_field("location");
-
-    schema_builder.add_text_field("body", TEXT | STORED);
-
-    schema_builder.build()
-}
-
-pub fn calculate_hash(input: &[u8]) -> blake2b_simd::Hash {
-    let file_hash = blake2b(input);
-    info!("Hash of file is: {:?}", file_hash);
-    file_hash
 }

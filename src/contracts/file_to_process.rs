@@ -1,4 +1,4 @@
-use crate::tantivy_wrapper::calculate_hash;
+use crate::custom_tantivy::utils::calculate_hash;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
