@@ -4,7 +4,6 @@ use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 use std::ffi::{OsStr, OsString};
-use std::path::Path;
 
 use pdf_extract::*;
 use regex::Regex;
@@ -47,6 +46,8 @@ impl Indexer for PdfIndexer {
 mod tests {
     use super::*;
     use crate::contracts::file_to_process::new_file_to_process;
+
+    use std::path::Path;
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_pdf_file() {

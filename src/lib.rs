@@ -6,10 +6,10 @@ extern crate log;
 pub mod contracts;
 pub mod error_adapter;
 pub mod indexers;
-pub mod query_executor;
+pub mod path_facet_convert;
 pub mod routes;
+pub mod searcher;
 pub mod tantivy_process;
+pub mod tantivy_wrapper;
 
 mod file_watcher;
-
-mod tantivy_api;

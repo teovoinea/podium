@@ -2,9 +2,8 @@ use super::DocumentSchema;
 use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::ffi::{OsStr, OsString};
-use std::path::Path;
 
 use msoffice_pptx::document::PPTXDocument;
 use msoffice_pptx::pml::ShapeGroup;
@@ -89,6 +88,8 @@ fn extract_text(shape_group: &ShapeGroup) -> Option<String> {
 mod tests {
     use super::*;
     use crate::contracts::file_to_process::new_file_to_process;
+
+    use std::path::Path;
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_pptx_file() {
