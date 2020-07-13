@@ -1,13 +1,12 @@
 use super::DocumentSchema;
 use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
-use crate::error_adapter::log_and_return_error_string;
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::io::Cursor;
 use std::time::Instant;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use image::ImageFormat;
 use once_cell::sync::Lazy;
 use tract_core::ndarray;

@@ -2,9 +2,8 @@ use super::DocumentSchema;
 use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::ffi::{OsStr, OsString};
-use std::path::Path;
 
 use calamine::{open_workbook, Reader, Xlsx};
 
@@ -58,6 +57,8 @@ impl Indexer for SpreadsheetIndexer {
 mod tests {
     use super::*;
     use crate::contracts::file_to_process::new_file_to_process;
+
+    use std::path::Path;
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_spreadsheet_file() {

@@ -1,12 +1,11 @@
-use crate::tantivy_api::*;
-
-use crossbeam::channel::{unbounded, Receiver, Sender};
 use serde::{Deserialize, Serialize};
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::IndexReader;
+
+use crate::custom_tantivy::{path_facet_convert::TantivyConvert, utils::destructure_schema};
 
 use std::path::*;
 
@@ -22,24 +21,27 @@ pub struct Response {
     /// The content that was indexed from the file
     pub body: String,
 }
-
-/// Starts the query executor thread
-/// It receives queries as strings and prints them out to console
-pub fn start_reader(
+pub struct Searcher {
     index: Index,
-    reader: IndexReader,
-    queries: Receiver<String>,
-    schema: &Schema,
-    results: Sender<QueryResponse>,
-) {
-    info!("Starting query executor thread");
-    for query_string in queries.iter() {
-        // Searchers are cheap and should be regenerated for each query
-        let searcher = reader.searcher();
+    index_reader: IndexReader,
+    schema: Schema,
+}
 
-        let (title, _, location, body) = destructure_schema(schema);
+impl Searcher {
+    pub fn new(index: Index, index_reader: IndexReader, schema: Schema) -> Self {
+        Searcher {
+            index,
+            index_reader,
+            schema,
+        }
+    }
 
-        let query_parser = QueryParser::for_index(&index, vec![title, body, location]);
+    pub fn search(&self, query_string: String) -> QueryResponse {
+        let searcher = self.index_reader.searcher();
+
+        let (title, _, location, body) = destructure_schema(&self.schema);
+
+        let query_parser = QueryParser::for_index(&self.index, vec![title, body, location]);
         info!("Searching for a file with {:?}...", query_string);
         let query = query_parser.parse_query(&query_string).unwrap();
 
@@ -83,8 +85,6 @@ pub fn start_reader(
             })
             .collect();
 
-        if results.send(result).is_err() {
-            error!("Failed to send search results to UI");
-        }
+        result
     }
 }

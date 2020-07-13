@@ -1,4 +1,4 @@
-use crate::contracts::AppState::*;
+use crate::contracts::app_state::*;
 use actix_web::{web, HttpRequest, HttpResponse};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -11,25 +11,8 @@ async fn index(app_state: web::Data<AppState>, req: HttpRequest) -> HttpResponse
     let query: String = req.match_info().query("query").parse().unwrap();
     println!("{:?}", query);
 
-    println!("Getting query channel");
-    let query_channel = &app_state.query_sender;
-
-    println!("Sending from query channel");
-    if let Err(err) = query_channel.send(query) {
-        println!("{:?}", err);
-    }
-
-    println!("Getting response channel");
-    let resp = &app_state.result_receiver;
-
-    println!("Getting from response channel");
-    let result = match resp.recv() {
-        Err(err) => format!("Err: {:?}", err),
-        Ok(r) => {
-            println!("Ok!: {:?}", r);
-            serde_json::to_string(&r).unwrap()
-        }
-    };
+    let response = app_state.searcher.search(query);
+    let result = serde_json::to_string(&response).unwrap();
 
     info!("Found results: {:?}", &result);
 

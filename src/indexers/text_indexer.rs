@@ -4,8 +4,6 @@ use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 use std::ffi::{OsStr, OsString};
-use std::fs;
-use std::path::Path;
 use std::str;
 
 pub struct TextIndexer;
@@ -49,6 +47,8 @@ impl Indexer for TextIndexer {
 mod tests {
     use super::*;
     use crate::contracts::file_to_process::new_file_to_process;
+
+    use std::path::Path;
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_text_file() {
