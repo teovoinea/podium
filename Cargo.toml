@@ -37,6 +37,7 @@ once_cell = "1.3.1"
 anyhow = "1.0"
 tokio = { version = "0.2", features = ["full"] }
 async-trait = "0.1.35"
+clap = "2.33.1"
 # TODO: once paperclip stabilizes actix open api generator - https://paperclip.waffles.space/actix-plugin.html
 # paperclip = { version = "0.3.0", features = ["actix"] }
 

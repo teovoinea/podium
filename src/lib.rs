@@ -3,6 +3,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
+pub mod config;
 pub mod contracts;
 pub mod custom_tantivy;
 pub mod error_adapter;

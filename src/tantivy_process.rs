@@ -8,22 +8,26 @@ use tantivy::directory::*;
 use tantivy::{Index, ReloadPolicy};
 use walkdir::WalkDir;
 
-use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
+
+pub struct TantivyConfig {
+    pub scan_directories: Vec<PathBuf>,
+    pub initial_processing_file: PathBuf,
+    pub index_path: PathBuf,
+}
 
 /// Starts watching directories
 /// Does initial processing
 /// Consumes watcher events to continue processing files
 pub async fn start_tantivy(
-    settings: HashMap<String, Vec<String>>,
+    settings: &TantivyConfig,
     tantivy_wrapper: &mut TantivyWrapper,
 ) -> tantivy::Result<()> {
-    let directories = settings.get("directories").unwrap();
+    let directories = &settings.scan_directories;
     let directories_clone = directories.clone();
 
-    let initial_processing_done: bool = settings.get("initial_processing").unwrap()[0]
-        .parse()
-        .unwrap();
+    let initial_processing_done = settings.initial_processing_file.exists();
 
     let analyzer = Analyzer::default();
 
@@ -59,22 +63,18 @@ pub async fn start_tantivy(
                 }
             }
         }
-    // After we finished doing the initial processing, add the file so that we know for next time
-    // TODO: Create initial processing file
-    // fs::File::create(initial_processing_file).unwrap();
+        fs::File::create(&settings.initial_processing_file).unwrap();
     } else {
         info!("Initial processing already done! Starting a reader");
     }
 
-    start_watcher(directories_clone, tantivy_wrapper).await;
+    start_watcher(&directories_clone, tantivy_wrapper).await;
 
     Ok(())
 }
 
-pub fn tantivy_init(
-    settings: &HashMap<String, Vec<String>>,
-) -> tantivy::Result<(Searcher, TantivyWrapper)> {
-    let index_path = PathBuf::from(settings.get("index_path").unwrap()[0].clone());
+pub fn tantivy_init(settings: &TantivyConfig) -> tantivy::Result<(Searcher, TantivyWrapper)> {
+    let index_path = &settings.index_path;
 
     let schema = build_schema();
 

@@ -1,7 +1,7 @@
 use crate::contracts::app_state::*;
 use actix_web::{web, HttpRequest, HttpResponse};
 
-pub fn config(cfg: &mut web::ServiceConfig) {
+pub fn server_config(cfg: &mut web::ServiceConfig) {
     cfg.route("/search/{query}", web::get().to(index));
 }
 

@@ -1,10 +1,13 @@
 extern crate podium_lib;
+use podium_lib::config::{get_config, AppConfig};
 use podium_lib::contracts::app_state::*;
 use podium_lib::routes::search;
-use podium_lib::tantivy_process::{start_tantivy, tantivy_init};
+use podium_lib::tantivy_process::{start_tantivy, tantivy_init, TantivyConfig};
 
 #[macro_use]
 extern crate log;
+
+extern crate clap;
 
 use std::collections::HashMap;
 use std::fs;
@@ -24,16 +27,20 @@ const APP_INFO: AppInfo = AppInfo {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    simple_logger::init_with_level(log::Level::Info).unwrap();
+    let config = get_config();
+    // dbg!(&config);
+    simple_logger::init_with_level(config.verbosity).unwrap();
     let local = tokio::task::LocalSet::new();
 
     // Get or create settings
-    let settings = get_or_create_settings();
+    let settings = get_or_create_settings(&config);
 
     let (searcher, mut tantivy_wrapper) = tantivy_init(&settings).unwrap();
 
     let _tantivy_thread = tokio::spawn(async move {
-        start_tantivy(settings, &mut tantivy_wrapper).await.unwrap();
+        start_tantivy(&settings, &mut tantivy_wrapper)
+            .await
+            .unwrap();
     });
 
     let sys = actix_rt::System::run_in_tokio("server", &local);
@@ -48,9 +55,9 @@ async fn main() -> io::Result<()> {
                     .finish(),
             )
             .app_data(app_state.clone())
-            .configure(search::config)
+            .configure(search::server_config)
     })
-    .bind("127.0.0.1:8080")?
+    .bind(format!("127.0.0.1:{}", config.port))?
     .run()
     .await?;
 
@@ -63,7 +70,7 @@ async fn main() -> io::Result<()> {
     // }
 }
 
-fn get_or_create_settings() -> HashMap<String, Vec<String>> {
+fn get_or_create_settings(app_config: &AppConfig) -> TantivyConfig {
     let index_path = app_dir(AppDataType::UserData, &APP_INFO, "index").unwrap();
     info!("Using index file in: {:?}", index_path);
 
@@ -71,41 +78,9 @@ fn get_or_create_settings() -> HashMap<String, Vec<String>> {
     let mut initial_processing_file = state_path.clone();
     initial_processing_file.push("initial_processing");
 
-    let config_path = app_dir(AppDataType::UserConfig, &APP_INFO, "config").unwrap();
-    let mut config_file = config_path.clone();
-    config_file.push("config");
-    config_file.set_extension("json");
-
-    if !config_file.as_path().exists() {
-        info!("Config file not found, copying default config");
-        let default_config_path = Path::new("debug_default_config.json");
-        fs::copy(default_config_path, &config_file).unwrap();
+    TantivyConfig {
+        index_path: index_path,
+        scan_directories: app_config.scan_directories.clone(),
+        initial_processing_file: initial_processing_file,
     }
-
-    info!("Loading config file from: {:?}", config_file);
-    let mut settings = Config::default();
-    settings.merge(File::from(config_file)).unwrap();
-
-    // TODO: define a better config file
-    let mut settings_dict = settings.try_into::<HashMap<String, Vec<String>>>().unwrap();
-
-    settings_dict.insert(
-        String::from("index_path"),
-        vec![String::from(index_path.to_str().unwrap())],
-    );
-    settings_dict.insert(
-        String::from("state_path"),
-        vec![String::from(state_path.to_str().unwrap())],
-    );
-    settings_dict.insert(
-        String::from("config_path"),
-        vec![String::from(config_path.to_str().unwrap())],
-    );
-
-    settings_dict.insert(
-        String::from("initial_processing"),
-        vec![format!("{:?}", initial_processing_file.exists())],
-    );
-
-    settings_dict
 }
