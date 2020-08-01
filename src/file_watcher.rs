@@ -11,7 +11,7 @@ use std::time::Duration;
 /// Starts the file watcher thread
 /// Reacts to document changes (create/update/delete)
 /// Does appropriate housekeeping for documents (eg: removing old documents after update)
-pub async fn start_watcher(directories: Vec<String>, tantivy_wrapper: &mut TantivyWrapper) {
+pub async fn start_watcher(directories: &Vec<PathBuf>, tantivy_wrapper: &mut TantivyWrapper) {
     info!("Starting file watcher thread on: {:?}", directories);
     let (watcher_tx, watcher_rx) = channel();
     let mut watcher = watcher(watcher_tx, Duration::from_secs(10)).unwrap();
