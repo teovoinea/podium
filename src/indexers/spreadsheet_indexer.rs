@@ -4,6 +4,7 @@ use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::Result;
 use std::ffi::{OsStr, OsString};
+use tracing::{span, Level};
 
 use calamine::{open_workbook, Reader, Xlsx};
 
@@ -20,35 +21,46 @@ impl Indexer for SpreadsheetIndexer {
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
-        let mut workbook: Xlsx<_> =
-            open_workbook(&file_to_process.path).expect(&log_and_return_error_string(format!(
-                "spreadsheet_indexer: Failed to open workbook at path: {:?}",
-                file_to_process.path
-            )));
-        let sheet_names = workbook.sheet_names().to_vec();
+        let path = file_to_process.path.to_str().unwrap();
+        span!(Level::INFO, "spreadsheet_indexer: indexing spreadsheet file", path).in_scope(|| {
+            let mut workbook: Xlsx<_> = span!(Level::INFO, "spreadsheet_indexer: Load from disk").in_scope(|| {
+                match open_workbook(&file_to_process.path) {
+                    Ok(workbook) => Ok(workbook),
+                    Err(e) => Err(anyhow::anyhow!(format!(
+                        "spreadsheet_indexer: Failed to open workbook at path: {:?} with additional error info {:?}",
+                        file_to_process.path,
+                        e
+                    )))
+                }
+            })?;
 
-        let strings = sheet_names
-            .iter()
-            .filter_map(|sheet_name| workbook.worksheet_range(sheet_name))
-            .filter_map(Result::ok)
-            .map(|range| {
-                range
-                    .used_cells()
-                    .filter(|(_, _, cell)| cell.is_string())
-                    .filter_map(|(_, _, cell)| cell.get_string())
-                    .map(std::string::ToString::to_string)
-                    .collect::<Vec<String>>()
-            })
-            .flatten()
-            .fold(String::new(), |mut acc, x| {
-                acc.push_str(&x);
-                acc.push_str(" ");
-                acc
+            let strings = span!(Level::INFO, "spreadsheet_indexer: Process file").in_scope(|| {
+                workbook
+                    .sheet_names()
+                    .to_vec()
+                    .iter()
+                    .filter_map(|sheet_name| workbook.worksheet_range(sheet_name))
+                    .filter_map(Result::ok)
+                    .map(|range| {
+                        range
+                            .used_cells()
+                            .filter(|(_, _, cell)| cell.is_string())
+                            .filter_map(|(_, _, cell)| cell.get_string())
+                            .map(std::string::ToString::to_string)
+                            .collect::<Vec<String>>()
+                    })
+                    .flatten()
+                    .fold(String::new(), |mut acc, x| {
+                        acc.push_str(&x);
+                        acc.push_str(" ");
+                        acc
+                    })
             });
 
-        Ok(DocumentSchema {
-            name: String::new(),
-            body: strings,
+            Ok(DocumentSchema {
+                name: String::new(),
+                body: strings,
+            })
         })
     }
 }

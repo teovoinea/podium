@@ -6,6 +6,7 @@ use crate::searcher::Searcher;
 
 use tantivy::directory::*;
 use tantivy::{Index, ReloadPolicy};
+use tracing::{info, span, Level};
 use walkdir::WalkDir;
 
 use std::fs;
@@ -33,6 +34,8 @@ pub async fn start_tantivy(
 
     if !initial_processing_done {
         info!("Initial processing was not previously done, doing now");
+        let initial_processing_span = span!(Level::INFO, "initial_processing");
+        let _initial_processing_entry = initial_processing_span.enter();
         for directory in directories {
             let walker = WalkDir::new(directory).into_iter();
             for entry in walker.filter_entry(|e| !is_hidden(e)) {
@@ -44,6 +47,9 @@ pub async fn start_tantivy(
                     _ => {}
                 }
                 let entry = entry.unwrap();
+                let entry_path = entry.path().to_str().unwrap();
+                let process_file_span = span!(Level::INFO, "processing_file", entry_path);
+                let _process_file_entry = process_file_span.enter();
                 if !entry.file_type().is_dir() {
                     let entry_path = entry.path();
 

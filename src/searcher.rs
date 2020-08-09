@@ -4,6 +4,7 @@ use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::IndexReader;
+use tracing::info;
 
 use crate::custom_tantivy::{path_facet_convert::TantivyConvert, utils::destructure_schema};
 

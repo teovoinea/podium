@@ -24,6 +24,7 @@ use std::iter::FromIterator;
 
 use anyhow::Result;
 use once_cell::sync::Lazy;
+use tracing::{instrument, span};
 
 use crate::contracts::file_to_process::FileToProcess;
 
@@ -127,6 +128,7 @@ static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
     indexers
 });
 
+#[instrument(skip(file_to_process))]
 pub async fn analyze(extension: OsString, file_to_process: FileToProcess) -> Vec<DocumentSchema> {
     let processing_task = tokio::task::spawn_blocking(move || {
         INDEXERS

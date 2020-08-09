@@ -1,6 +1,8 @@
 use crate::custom_tantivy::utils::calculate_hash;
+use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use tokio::fs;
+use tracing::{info_span, instrument};
 
 #[derive(Debug, Clone)]
 pub struct FileToProcess {
@@ -9,9 +11,14 @@ pub struct FileToProcess {
     pub contents: Vec<u8>,
 }
 
-pub async fn new_file_to_process<T: AsRef<Path>>(path: T) -> FileToProcess {
+#[instrument]
+pub async fn new_file_to_process<T: AsRef<Path> + Debug>(path: T) -> FileToProcess {
     let contents = fs::read(&path).await.unwrap();
+
+    let span = info_span!("calculating hash");
+    let _enter = span.enter();
     let hash = calculate_hash(&contents);
+    drop(_enter);
 
     FileToProcess {
         path: PathBuf::from(path.as_ref()),

@@ -4,21 +4,16 @@ use podium_lib::contracts::app_state::*;
 use podium_lib::routes::search;
 use podium_lib::tantivy_process::{start_tantivy, tantivy_init, TantivyConfig};
 
-#[macro_use]
-extern crate log;
-
-extern crate clap;
-
-use std::collections::HashMap;
-use std::fs;
 use std::io;
-use std::path::Path;
 
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
-
 use app_dirs::*;
-use config::*;
+use tracing::info;
+use tracing_subscriber::{fmt, layer::SubscriberExt, prelude::*, registry::Registry};
+
+use std::{fs::File, io::BufWriter};
+use tracing_flame::FlameLayer;
 
 const APP_INFO: AppInfo = AppInfo {
     name: "Podium",
@@ -28,8 +23,15 @@ const APP_INFO: AppInfo = AppInfo {
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let config = get_config();
-    // dbg!(&config);
-    simple_logger::init_with_level(config.verbosity).unwrap();
+    // let subscriber = tracing_subscriber::fmt()
+    //     .with_max_level(config.verbosity.clone())
+    //     .finish()
+    //     .with(layer);
+
+    // tracing::subscriber::set_global_default(subscriber);
+
+    setup_global_subscriber(&config);
+
     let local = tokio::task::LocalSet::new();
 
     // Get or create settings
@@ -83,4 +85,15 @@ fn get_or_create_settings(app_config: &AppConfig) -> TantivyConfig {
         scan_directories: app_config.scan_directories.clone(),
         initial_processing_file: initial_processing_file,
     }
+}
+
+fn setup_global_subscriber(config: &AppConfig) -> impl Drop {
+    let (flame_layer, _guard) = FlameLayer::with_file("./tracing.folded").unwrap();
+    let t = tracing_subscriber::fmt()
+        .with_max_level(config.verbosity.clone())
+        .finish()
+        .with(flame_layer)
+        .try_init();
+
+    _guard
 }

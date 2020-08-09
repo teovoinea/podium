@@ -2,7 +2,8 @@ use super::DocumentSchema;
 use super::Indexer;
 use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, Error};
+use tracing::{span, Level};
 use std::ffi::{OsStr, OsString};
 use std::io::Cursor;
 
@@ -18,26 +19,35 @@ impl Indexer for CsvIndexer {
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
-        let mut reader = csv::Reader::from_reader(Cursor::new(&file_to_process.contents));
-
-        let headers = reader
-            .headers()
-            .with_context(|| {
-                log_and_return_error_string(format!(
-                    "csv_indexer: Failed to get headers from csv at path: {:?}",
-                    file_to_process.path
-                ))
-            })?
-            .iter()
-            .fold(String::new(), |mut acc, x| {
-                acc.push_str(&x);
-                acc.push_str(" ");
-                acc
+        let path = file_to_process.path.to_str().unwrap();
+        span!(Level::INFO, "csv_indexer: indexing csv file", path).in_scope(|| {
+            let mut reader = span!(Level::INFO, "csv_indexer: Loading csv from memory").in_scope(||{
+                csv::Reader::from_reader(Cursor::new(&file_to_process.contents))
             });
 
-        Ok(DocumentSchema {
-            name: String::new(),
-            body: headers,
+            let headers = span!(Level::INFO, "csv_indexer: Processing csv info").in_scope(|| -> Result<String, Error>{
+                Ok(
+                    reader
+                        .headers()
+                        .with_context(|| {
+                            log_and_return_error_string(format!(
+                                "csv_indexer: Failed to get headers from csv at path: {:?}",
+                                file_to_process.path
+                            ))
+                        })?
+                        .iter()
+                        .fold(String::new(), |mut acc, x| {
+                            acc.push_str(&x);
+                            acc.push_str(" ");
+                            acc
+                        })
+                )
+            })?;
+    
+            Ok(DocumentSchema {
+                name: String::new(),
+                body: headers,
+            })
         })
     }
 }
