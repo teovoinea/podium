@@ -3,7 +3,7 @@ use clap::{
     ArgMatches,
 };
 
-use log::Level;
+use tracing::Level;
 
 use std::path::{Path, PathBuf};
 
@@ -54,11 +54,11 @@ pub fn get_config() -> AppConfig {
     dbg!(matches.occurrences_of("verbose"));
 
     let verbosity = match matches.occurrences_of("verbose") {
-        4 => Level::Trace,
-        3 => Level::Debug,
-        2 => Level::Info,
-        1 => Level::Warn,
-        0 | _ => Level::Error,
+        4 => Level::TRACE,
+        3 => Level::DEBUG,
+        2 => Level::INFO,
+        1 => Level::WARN,
+        0 | _ => Level::ERROR,
     };
 
     let port = match matches.value_of("port") {

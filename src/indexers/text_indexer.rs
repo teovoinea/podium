@@ -5,6 +5,7 @@ use crate::error_adapter::log_and_return_error_string;
 use anyhow::{Context, Result};
 use std::ffi::{OsStr, OsString};
 use std::str;
+use tracing::{span, Level};
 
 pub struct TextIndexer;
 
@@ -18,27 +19,25 @@ impl Indexer for TextIndexer {
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
-        let name = file_to_process
-            .path
-            .file_name()
-            .unwrap()
-            .to_os_string()
-            .into_string()
-            .expect(&log_and_return_error_string(format!(
-                "text_indexer: Failed to get file name for file at path: {:?}",
-                file_to_process.path
-            )));
+        span!(Level::INFO, "text_indexer: indexing text file").in_scope(|| {
+            let name = file_to_process
+                .path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
 
-        let body = str::from_utf8(&file_to_process.contents).with_context(|| {
-            log_and_return_error_string(format!(
-                "text_indexer: Failed to read file to string at path: {:?}",
-                file_to_process.path
-            ))
-        })?;
+            let body = str::from_utf8(&file_to_process.contents).with_context(|| {
+                log_and_return_error_string(format!(
+                    "text_indexer: Failed to read file to string at path: {:?}",
+                    file_to_process.path
+                ))
+            })?;
 
-        Ok(DocumentSchema {
-            name: name,
-            body: body.to_string(),
+            Ok(DocumentSchema {
+                name: name,
+                body: body.to_string(),
+            })
         })
     }
 }

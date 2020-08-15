@@ -4,10 +4,10 @@ use crate::contracts::file_to_process::FileToProcess;
 use crate::error_adapter::log_and_return_error_string;
 use anyhow::Result;
 use std::ffi::{OsStr, OsString};
+use tracing::{span, Level};
 
 use msoffice_pptx::document::PPTXDocument;
 use msoffice_pptx::pml::ShapeGroup;
-
 use msoffice_shared::drawingml::TextRun;
 
 pub struct PptxIndexer;
@@ -22,26 +22,35 @@ impl Indexer for PptxIndexer {
     }
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
-        let mut total_text = String::new();
-        let document = PPTXDocument::from_file(file_to_process.path.as_path()).expect(
-            &log_and_return_error_string(format!(
-                "pptx_indexer: Failed to open PPTX Document from file at path: {:?}",
-                file_to_process.path
-            )),
-        );
-
-        for slide in document.slide_map.values() {
-            let shape_group = &(*(*slide.common_slide_data).shape_tree).shape_array;
-            for s_g in shape_group {
-                if let Some(res_text) = extract_text(s_g) {
-                    total_text.push_str(&res_text);
+        let path = file_to_process.path.to_str().unwrap();
+        span!(Level::INFO, "pptx_indexer: indexing powerpoint file", path).in_scope(|| {
+            let mut total_text = String::new();
+            let document = span!(Level::INFO, "pptx_indexer: Load from disk").in_scope(|| {
+                match PPTXDocument::from_file(file_to_process.path.as_path()) {
+                    Ok(doc) => Ok(doc),
+                    Err(e) => Err(anyhow::anyhow!(format!(
+                        "pptx_indexer: Failed to open PPTX Document from file at path: {:?} with additional error info {:?}",
+                        file_to_process.path,
+                        e
+                    )))
                 }
-            }
-        }
+            })?;
 
-        Ok(DocumentSchema {
-            name: String::new(),
-            body: total_text,
+            span!(Level::INFO, "pptx_indexer: Process file").in_scope(|| {
+                for slide in document.slide_map.values() {
+                    let shape_group = &(*(*slide.common_slide_data).shape_tree).shape_array;
+                    for s_g in shape_group {
+                        if let Some(res_text) = extract_text(s_g) {
+                            total_text.push_str(&res_text);
+                        }
+                    }
+                }
+            });
+
+            Ok(DocumentSchema {
+                name: String::new(),
+                body: total_text,
+            })
         })
     }
 }

@@ -3,6 +3,7 @@ use tantivy::query::TermQuery;
 use tantivy::schema::*;
 use tantivy::DocAddress;
 use tantivy::{IndexReader, IndexWriter};
+use tracing::{info, instrument};
 
 use crate::contracts::file_to_process::FileToProcess;
 use crate::indexers::*;
@@ -29,6 +30,7 @@ impl TantivyWrapper {
         }
     }
 
+    #[instrument(skip(self, hash))]
     pub fn update_doc_by_hash(
         &self,
         entry_path: &Path,
@@ -40,11 +42,12 @@ impl TantivyWrapper {
         if let Some(doc_address) = self.get_doc_by_hash(hash_field, hash.to_hex().as_str()) {
             info!("We've seen this file before! {:?}", location_facet);
             let mut retrieved_doc = searcher.doc(doc_address).unwrap();
+            let is_found = !retrieved_doc
+                .get_all(location)
+                .contains(&&Value::from(Facet::from_text(location_facet)));
             info!(
                 "Is this current file's location already in the document? {:?}",
-                !retrieved_doc
-                    .get_all(location)
-                    .contains(&&Value::from(Facet::from_text(location_facet)))
+                is_found
             );
             if !retrieved_doc
                 .get_all(location)
@@ -64,6 +67,7 @@ impl TantivyWrapper {
         None
     }
 
+    #[instrument(skip(self, location_field, location_facet))]
     fn delete_doc_by_location(
         &self,
         location_field: Field,
@@ -81,6 +85,7 @@ impl TantivyWrapper {
         }
     }
 
+    #[instrument(skip(self, hash_field, hash))]
     pub fn delete_doc_by_hash(
         mut self,
         hash_field: Field,
@@ -99,6 +104,7 @@ impl TantivyWrapper {
         }
     }
 
+    #[instrument(skip(self, hash_field, hash))]
     pub fn get_doc_by_hash(&self, hash_field: Field, hash: &str) -> Option<DocAddress> {
         let searcher = self.index_reader.searcher();
         let query = TermQuery::new(
@@ -123,6 +129,7 @@ impl TantivyWrapper {
         }
     }
 
+    #[instrument(skip(self, location_field, location_facet))]
     pub fn get_doc_by_location(
         &self,
         location_field: Field,
@@ -205,6 +212,7 @@ pub trait FileProcessor {
 
 #[async_trait]
 impl FileProcessor for TantivyWrapper {
+    #[instrument(skip(self, file_to_process))]
     async fn process_file(&self, file_to_process: FileToProcess) -> Option<Document> {
         let entry_path = file_to_process.path.clone();
         let path = entry_path.as_path();

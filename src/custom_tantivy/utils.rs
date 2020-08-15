@@ -1,4 +1,5 @@
 use tantivy::schema::*;
+use tracing::info;
 
 use blake2b_simd::blake2b;
 
