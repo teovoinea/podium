@@ -87,7 +87,7 @@ impl Indexer for ExifIndexer {
                 }
             });
 
-            let res = span!(Level::INFO, "exif_indexer: Look up the coordinated").in_scope(|| -> Result<&&Record, Error>{
+            let res = span!(Level::INFO, "exif_indexer: Look up the coordinates").in_scope(|| -> Result<&&Record, Error>{
                 Ok(
                     GEOCODER.search(&[lat, lon])
                         .with_context(|| log_and_return_error_string(format!("exif_indexer: Failed to search for location in geocoder: lat = {:?} lon = {:?}", lat, lon)))?

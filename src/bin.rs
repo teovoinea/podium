@@ -23,12 +23,6 @@ const APP_INFO: AppInfo = AppInfo {
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let config = get_config();
-    // let subscriber = tracing_subscriber::fmt()
-    //     .with_max_level(config.verbosity.clone())
-    //     .finish()
-    //     .with(layer);
-
-    // tracing::subscriber::set_global_default(subscriber);
 
     setup_global_subscriber(&config);
 

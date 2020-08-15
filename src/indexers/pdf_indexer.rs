@@ -23,10 +23,10 @@ impl Indexer for PdfIndexer {
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
         let path = file_to_process.path.to_str().unwrap();
         span!(Level::INFO, "pdf_indexer: indexing pdf file", path).in_scope(|| {
-            // TODO: the resulting string from this is poorly extracted
-            // better than nothing but it should be fixed
             let res = span!(Level::INFO, "pdf_indexer: Loading from disk and processing")
-                .in_scope(|| {
+            .in_scope(|| {
+                    // TODO: the resulting string from this is poorly extracted
+                    // better than nothing but it should be fixed
                     extract_text(&file_to_process.path).with_context(|| {
                         log_and_return_error_string(format!(
                             "pdf_indexer: Failed to extract text from pdf at path: {:?}",

@@ -112,7 +112,7 @@ impl Indexer for MobileNetV2Indexer {
                 }
             })?;
 
-            let image = span!(Level::INFO, "mobile_net_v2_indexer: Load image (maybe from disk?)").in_scope(|| {
+            let image = span!(Level::INFO, "mobile_net_v2_indexer: Load image").in_scope(|| {
                 let image_format = match IMAGE_FORMATS.get(&file_to_process.path.extension().unwrap().to_os_string()) {
                     Some(image_format) => Ok(image_format),
                     None => Err(anyhow::anyhow!(format!(
@@ -129,7 +129,6 @@ impl Indexer for MobileNetV2Indexer {
                     )))
                 }
                 // image crate seems to be more tolerant to malformed image filies using the open function
-                // Ok(image::open(&file_to_process.path))
             })?;
 
             let image: Tensor = span!(Level::INFO, "mobile_net_v2_indexer: Pre-process image").in_scope(|| {
