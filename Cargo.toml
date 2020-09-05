@@ -44,10 +44,8 @@ tracing-futures = "0.2.3"
 tracing-flame = "0.1.0"
 # TODO: once paperclip stabilizes actix open api generator - https://paperclip.waffles.space/actix-plugin.html
 # paperclip = { version = "0.3.0", features = ["actix"] }
-
-[target."cfg(not(windows))".dependencies]
-tract-tensorflow = "0.8.0"
-tract-core = "0.6.1"
+tract-tensorflow = "0.10.10"
+tract-core = "0.10.10"
 
 [dev-dependencies]
 criterion = "0.2"

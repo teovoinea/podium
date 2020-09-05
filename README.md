@@ -22,14 +22,14 @@ Podium doesn't interfere with how you already organize your files, but it can he
 
 ### Supported file types
 
-| Type                     | Extensions                                       | Windows | Linux | MacOS | 
-|--------------------------|--------------------------------------------------|---------|-------|-------|
-| Image - object detection | .tif, .tiff, .jpg, .jpeg, .png, .bmp, .ico, .gif | ❌       | ✅     | ✅     |
-| Image - exif metadata    | .tif, .tiff, .jpg, .jpeg                         | ✅       | ✅     | ✅     |
-| Spreadsheed              | .csv, .xlsx                                      | ✅       | ✅     | ✅     |
-| Text                     | .txt, .docx                                      | ✅       | ✅     | ✅     |
-| Slideshow                | .pptx                                            | ✅       | ✅     | ✅     |
-| PDF                      | .pdf                                             | ✅       | ✅     | ✅     |
+| Type                     | Extensions                                       |
+|--------------------------|--------------------------------------------------|
+| Image - object detection | .tif, .tiff, .jpg, .jpeg, .png, .bmp, .ico, .gif |
+| Image - exif metadata    | .tif, .tiff, .jpg, .jpeg                         |
+| Spreadsheed              | .csv, .xlsx                                      |
+| Text                     | .txt, .docx                                      |
+| Slideshow                | .pptx                                            |
+| PDF                      | .pdf                                             |
 
 
 ### Performance
