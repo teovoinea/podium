@@ -1,0 +1,10 @@
+* {
+    background-color: #2d2d2d;
+    color: #dfdfdf;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}

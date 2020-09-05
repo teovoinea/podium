@@ -1,0 +1,23 @@
+.searchInput {
+    flex-grow: 1;
+    line-height: 2.5;
+    border: none;
+    outline: none;
+    font-size: 30px;
+    max-height: 29px;
+}
+
+.searchInput :focus {
+    border: none;
+    outline: none;
+}
+
+.searchInputRoot {
+    display: flex;
+    flex-direction: row;
+    margin: 8px;
+}
+
+#magnifyingGlass {
+    font-size: 2em;
+}
