@@ -1,5 +1,4 @@
 mod exif_indexer;
-#[cfg(not(target_os = "windows"))]
 mod mobile_net_v2_indexer;
 mod pdf_indexer;
 mod text_indexer;
@@ -9,7 +8,6 @@ mod pptx_indexer;
 mod spreadsheet_indexer;
 
 pub use self::exif_indexer::ExifIndexer;
-#[cfg(not(target_os = "windows"))]
 pub use self::mobile_net_v2_indexer::MobileNetV2Indexer;
 pub use self::pdf_indexer::PdfIndexer;
 pub use self::text_indexer::TextIndexer;
@@ -101,26 +99,12 @@ impl Default for Analyzer {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
 static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
     let indexers: Vec<Box<dyn Indexer>> = vec![
         Box::new(TextIndexer),
         Box::new(ExifIndexer),
         Box::new(PdfIndexer),
         Box::new(MobileNetV2Indexer),
-        Box::new(PptxIndexer),
-        Box::new(CsvIndexer),
-        Box::new(SpreadsheetIndexer),
-    ];
-    indexers
-});
-
-#[cfg(target_os = "windows")]
-static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
-    let indexers: Vec<Box<dyn Indexer>> = vec![
-        Box::new(TextIndexer),
-        Box::new(ExifIndexer),
-        Box::new(PdfIndexer),
         Box::new(PptxIndexer),
         Box::new(CsvIndexer),
         Box::new(SpreadsheetIndexer),

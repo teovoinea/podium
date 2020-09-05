@@ -4,12 +4,11 @@ use crate::contracts::file_to_process::FileToProcess;
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::io::Cursor;
-use std::time::Instant;
 
 use anyhow::{Error, Result};
 use image::ImageFormat;
 use once_cell::sync::Lazy;
-use tracing::{info, span, Level};
+use tracing::{span, Level};
 use tract_core::ndarray;
 use tract_tensorflow::prelude::*;
 
@@ -197,7 +196,6 @@ mod tests {
     use crate::contracts::file_to_process::new_file_to_process;
     use std::path::Path;
 
-    #[cfg(not(target_os = "windows"))]
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_mobile_net_v2_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
