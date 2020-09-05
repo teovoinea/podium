@@ -1,0 +1,14 @@
+.searchResultsRowContent {
+    padding: 8px;
+    flex-direction: row;
+}
+
+.searchResultsRow :hover,
+.searchResultsRow :hover > * {
+    background-color: #043fc6;
+}
+
+.searchResultsRowIcon {
+    padding-right: 15px;
+    padding-left: 10px;
+}
