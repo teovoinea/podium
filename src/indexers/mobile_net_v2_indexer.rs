@@ -193,8 +193,9 @@ impl Indexer for MobileNetV2Indexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::contracts::file_to_process::new_file_to_process;
+    use std::path::Path;
 
-    #[cfg(not(target_os = "windows"))]
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_mobile_net_v2_file() {
         let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
