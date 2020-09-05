@@ -344,7 +344,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "async-trait"
-version = "0.1.38"
+version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.18 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2266,7 +2266,7 @@ dependencies = [
  "actix-web 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "anyhow 1.0.32 (registry+https://github.com/rust-lang/crates.io-index)",
  "app_dirs 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "async-trait 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)",
+ "async-trait 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2b_simd 0.5.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "calamine 0.15.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.33.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2298,7 +2298,7 @@ dependencies = [
  "tracing-flame 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing-futures 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing-subscriber 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
- "tract-core 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tract-core 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tract-tensorflow 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -3297,6 +3297,27 @@ dependencies = [
 
 [[package]]
 name = "tract-core"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "bit-set 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "derive-new 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "downcast-rs 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dyn-clone 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "error-chain 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "half 1.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itertools 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ndarray 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-integer 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "smallvec 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tract-linalg 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "tract-core"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
@@ -3326,6 +3347,24 @@ dependencies = [
  "educe 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "tract-core 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "tract-linalg"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "cc 1.0.50 (registry+https://github.com/rust-lang/crates.io-index)",
+ "derive-new 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dyn-clone 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "half 1.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)",
+ "liquid 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "smallvec 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-normalization 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3368,7 +3407,7 @@ name = "trust-dns-proto"
 version = "0.18.0-alpha.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "async-trait 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)",
+ "async-trait 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
  "enum-as-inner 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3647,7 +3686,7 @@ dependencies = [
 "checksum arrayvec 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)" = "cd9fd44efafa8690358b7408d253adf110036b88f55672a933f01d616ad9b1b9"
 "checksum arrayvec 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
 "checksum ascii 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)" = "eab1c04a571841102f5345a8fc0f6bb3d31c315dec879b5c6e42e40ce7ffa34e"
-"checksum async-trait 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)" = "6e1a4a2f97ce50c9d0282c1468816208588441492b40d813b2e0419c22c05e7f"
+"checksum async-trait 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "687c230d85c0a52504709705fc8a53e4a692b83a2184f03dae73e38e1e93a783"
 "checksum atomicwrites 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)" = "6a2baf2feb820299c53c7ad1cc4f5914a220a1cb76d7ce321d2522a94b54651f"
 "checksum atty 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)" = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
 "checksum autocfg 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)" = "1d49d90015b3c36167a20fe2810c5cd875ad504b39cff3d4eae7977e6b7c1cb2"
@@ -3971,8 +4010,10 @@ dependencies = [
 "checksum tracing-log 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "5e0f8c7178e13481ff6765bd169b33e8d554c5d2bbede5e32c356194be02b9b9"
 "checksum tracing-serde 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b6ccba2f8f16e0ed268fc765d9b7ff22e965e7185d32f8f1ec8294fe17d86e79"
 "checksum tracing-subscriber 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)" = "abd165311cc4d7a555ad11cc77a37756df836182db0d81aac908c8184c584f40"
+"checksum tract-core 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ab2d9992349caee6124fa3dd3b48ea36f3c047791970ea71e7c8700d47d5d8ab"
 "checksum tract-core 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "cc8e13e7c48afe1fb80f4464b9cc9f89633c2e7f4ffd36849275987faa20e7c1"
 "checksum tract-hir 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d056a4f1274f6b4735e3ef713e17f7d13bcd4dfe26edef578b846453b8b57959"
+"checksum tract-linalg 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "6e0aad4b0b02216b4b3d7eb3e562cec13f27de708241c2658ee84933ff57ad5e"
 "checksum tract-linalg 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "21613239b482ecfad23191006f6e072591251626427f1daea0e1eccbb325f0dc"
 "checksum tract-tensorflow 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8189f45ba233801bab1b7e102780db95ed865053a14cbb4df3c97c33949fc1eb"
 "checksum trust-dns-proto 0.18.0-alpha.2 (registry+https://github.com/rust-lang/crates.io-index)" = "2a7f3a2ab8a919f5eca52a468866a67ed7d3efa265d48a652a9a3452272b413f"
