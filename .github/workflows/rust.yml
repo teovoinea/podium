@@ -1,28 +1,29 @@
 name: Test
 
-on: [pull_request]
+on: 
+  pull_request:
+    paths-ignore:
+      - 'client/**'
+      - 'README.md'
+      - 'assets/**'
 
 jobs:
   build:
-    name: Test with ${{ matrix.rust_version }} rust on ${{ matrix.os }}
+    name: Test with stable rust on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        rust_version: [stable]
 
     steps:
     - uses: actions/checkout@master
-    - name: Use ${{ matrix.rust_version }} rust
-      run: rustup default ${{ matrix.rust_version }}
+    - name: Use stable rust
+      run: rustup default stable
     - name: Install rustfmt
-      if: matrix.rust_version == 'stable'
       run: rustup component add rustfmt
     - name: Run fmt
-      if: matrix.rust_version == 'stable'
       run: cargo fmt --all -- --check
     - name: Install clippy
-      if: matrix.rust_version == 'stable'
       run: rustup component add clippy
 #    - name: Run clippy
 #      if: matrix.rust_version == 'stable'
