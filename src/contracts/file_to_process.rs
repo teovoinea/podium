@@ -11,6 +11,12 @@ pub struct FileToProcess {
     pub contents: Vec<u8>,
 }
 
+impl FileToProcess {
+    pub fn path(&self) -> String {
+        self.path.to_string_lossy().to_string()
+    }
+}
+
 #[instrument]
 pub async fn new_file_to_process<T: AsRef<Path> + Debug>(path: T) -> FileToProcess {
     let contents = fs::read(&path).await.unwrap();
