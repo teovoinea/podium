@@ -183,7 +183,7 @@ impl Indexer for MobileNetV2Indexer {
             })?;
 
             Ok(DocumentSchema {
-                name: String::new(),
+                name: file_to_process.path(),
                 body: body_res.to_string(),
             })
         })
@@ -203,7 +203,7 @@ mod tests {
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
 
-        assert_eq!(indexed_document.name, "");
+        assert_eq!(indexed_document.name, "./test_files/IMG_2551.jpeg");
         assert_eq!(indexed_document.body, "eggnog");
     }
 
