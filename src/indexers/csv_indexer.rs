@@ -44,7 +44,7 @@ impl Indexer for CsvIndexer {
             )?;
 
             Ok(DocumentSchema {
-                name: String::new(),
+                name: file_to_process.path(),
                 body: headers,
             })
         })
@@ -64,7 +64,7 @@ mod tests {
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
 
-        assert_eq!(indexed_document.name, "");
+        assert_eq!(indexed_document.name, "./test_files/data.csv");
         assert_eq!(
             indexed_document.body,
             "first_name last_name street city state postal_code "
