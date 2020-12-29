@@ -9,7 +9,7 @@ mod spreadsheet_indexer;
 
 pub use self::exif_indexer::ExifIndexer;
 pub use self::mobile_net_v2_indexer::MobileNetV2Indexer;
-pub use self::pdf_indexer::PdfIndexer;
+// pub use self::pdf_indexer::PdfIndexer;
 pub use self::text_indexer::TextIndexer;
 // pub use self::docx_indexer::DocxIndexer;
 pub use self::csv_indexer::CsvIndexer;
@@ -56,7 +56,7 @@ impl Default for Analyzer {
         let indexers: Vec<Box<dyn Indexer>> = vec![
             Box::new(TextIndexer),
             Box::new(ExifIndexer),
-            Box::new(PdfIndexer),
+            // Box::new(PdfIndexer),
             Box::new(MobileNetV2Indexer),
             Box::new(PptxIndexer),
             Box::new(CsvIndexer),
@@ -80,7 +80,7 @@ impl Default for Analyzer {
         let indexers: Vec<Box<dyn Indexer>> = vec![
             Box::new(TextIndexer),
             Box::new(ExifIndexer),
-            Box::new(PdfIndexer),
+            // Box::new(PdfIndexer),
             Box::new(PptxIndexer),
             Box::new(CsvIndexer),
             Box::new(SpreadsheetIndexer),
@@ -103,7 +103,7 @@ static INDEXERS: Lazy<Vec<Box<dyn Indexer>>> = Lazy::new(|| {
     let indexers: Vec<Box<dyn Indexer>> = vec![
         Box::new(TextIndexer),
         Box::new(ExifIndexer),
-        Box::new(PdfIndexer),
+        // Box::new(PdfIndexer),
         Box::new(MobileNetV2Indexer),
         Box::new(PptxIndexer),
         Box::new(CsvIndexer),
