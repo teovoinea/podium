@@ -247,7 +247,10 @@ impl FileProcessor for TantivyWrapper {
                 acc.push_str(" ");
                 acc
             });
-            info!("Title: {:?} Body: {:?} Location: {:?}", title, body, location_facet);
+            info!(
+                "Title: {:?} Body: {:?} Location: {:?}",
+                title, body, location_facet
+            );
             assert!(location_facet.starts_with('/'));
 
             let (title_field, hash_field, location_field, body_field) =
