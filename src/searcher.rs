@@ -42,11 +42,13 @@ impl Searcher {
 
         let (title, _, location, body) = destructure_schema(&self.schema);
 
-        let query_parser = QueryParser::for_index(&self.index, vec![title, body, location]);
+        let query_parser = QueryParser::for_index(&self.index, vec![title, body]);
         info!("Searching for a file with {:?}...", query_string);
         let query = query_parser.parse_query(&query_string).unwrap();
+        info!("Parsed query");
 
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
+        info!("Executed search");
 
         let result = top_docs
             .into_iter()

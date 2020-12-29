@@ -46,9 +46,8 @@ async fn main() -> io::Result<()> {
     let server_res = HttpServer::new(move || {
         App::new()
             .wrap(
-                Cors::new() // <- Construct CORS middleware builder
-                    .send_wildcard()
-                    .finish(),
+                Cors::default() // <- Construct CORS middleware builder
+                    .send_wildcard(),
             )
             .app_data(app_state.clone())
             .configure(search::server_config)
