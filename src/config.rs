@@ -51,8 +51,6 @@ pub fn get_config() -> AppConfig {
         .map(|path| PathBuf::from(path))
         .collect::<Vec<PathBuf>>();
 
-    dbg!(matches.occurrences_of("verbose"));
-
     let verbosity = match matches.occurrences_of("verbose") {
         4 => Level::TRACE,
         3 => Level::DEBUG,

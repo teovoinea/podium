@@ -59,11 +59,12 @@ async fn main() -> io::Result<()> {
 
     sys.await?;
 
-    Ok(server_res)
+    _tantivy_thread.await?;
 
-    // if tantivy_thread.unwrap().join().is_err() {
-    //     error!("Failed to join tantivy thread");
-    // }
+    println!("we get to the end");
+    info!("So does log");
+
+    Ok(server_res)
 }
 
 fn get_or_create_settings(app_config: &AppConfig) -> TantivyConfig {
@@ -81,13 +82,17 @@ fn get_or_create_settings(app_config: &AppConfig) -> TantivyConfig {
     }
 }
 
-fn setup_global_subscriber(config: &AppConfig) -> impl Drop {
+fn setup_global_subscriber(config: &AppConfig) -> (impl Drop, impl Drop) {
     let (flame_layer, _guard) = FlameLayer::with_file("./tracing.folded").unwrap();
+    let file_appender = tracing_appender::rolling::minutely("./", "prefix.log");
+    let (non_blocking, _guard2) = tracing_appender::non_blocking(file_appender);
+
     let t = tracing_subscriber::fmt()
         .with_max_level(config.verbosity.clone())
+        .with_writer(non_blocking)
         .finish()
         .with(flame_layer)
-        .try_init();
+        .init();
 
-    _guard
+    (_guard, _guard2)
 }
