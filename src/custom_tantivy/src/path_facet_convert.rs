@@ -1,5 +1,5 @@
+use common::tantivy::schema::*;
 use std::path::{Path, PathBuf};
-use tantivy::schema::*;
 
 /// Converts to/from Facet/PathBuf
 pub trait TantivyConvert {

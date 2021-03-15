@@ -1,10 +1,9 @@
-use super::DocumentSchema;
-use super::Indexer;
-use crate::contracts::file_to_process::FileToProcess;
-use crate::error_adapter::log_and_return_error_string;
-use anyhow::Result;
+use common::anyhow;
+use common::anyhow::Result;
+use common::tracing::{span, Level};
+use contracts::file_to_process::FileToProcess;
+use contracts::indexer::{DocumentSchema, Indexer};
 use std::ffi::{OsStr, OsString};
-use tracing::{span, Level};
 
 use msoffice_pptx::document::PPTXDocument;
 use msoffice_pptx::pml::ShapeGroup;
@@ -96,7 +95,8 @@ fn extract_text(shape_group: &ShapeGroup) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contracts::file_to_process::new_file_to_process;
+    use common::tokio;
+    use contracts::file_to_process::new_file_to_process;
 
     use std::path::Path;
 

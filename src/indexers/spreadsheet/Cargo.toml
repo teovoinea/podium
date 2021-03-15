@@ -1,0 +1,10 @@
+[package]
+name = "spreadsheet_indexer"
+version = "0.1.0"
+authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+contracts = { path = "../../contracts" }
+common = { path = "../../common" }
+calamine = "0.15.4"

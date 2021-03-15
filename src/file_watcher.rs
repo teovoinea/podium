@@ -1,5 +1,5 @@
-use crate::contracts::file_to_process::{new_file_to_process, FileToProcess};
-use crate::custom_tantivy::wrapper::*;
+use contracts::file_to_process::{new_file_to_process, FileToProcess};
+use custom_tantivy::wrapper::*;
 
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use tracing::info;

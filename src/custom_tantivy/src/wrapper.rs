@@ -1,19 +1,20 @@
-use tantivy::collector::{Count, TopDocs};
-use tantivy::query::TermQuery;
-use tantivy::schema::*;
-use tantivy::DocAddress;
-use tantivy::{IndexReader, IndexWriter};
-use tracing::{info, instrument};
-
-use crate::contracts::file_to_process::FileToProcess;
-use crate::indexers::*;
-
-use async_trait::async_trait;
 use blake2b_simd;
+use common::tantivy;
+use common::tantivy::collector::{Count, TopDocs};
+use common::tantivy::query::TermQuery;
+use common::tantivy::schema::*;
+use common::tantivy::DocAddress;
+use common::tantivy::{IndexReader, IndexWriter};
+use common::tracing::{error, info, instrument};
+
+use crate::path_facet_convert::*;
+use crate::utils::destructure_schema;
+use contracts::file_to_process::FileToProcess;
+use indexers::*;
+
+use common::async_trait::async_trait;
 
 use std::path::{Path, PathBuf};
-
-use crate::custom_tantivy::{path_facet_convert::*, utils::destructure_schema};
 
 pub struct TantivyWrapper {
     pub index_reader: IndexReader,

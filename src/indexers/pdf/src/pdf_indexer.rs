@@ -1,10 +1,9 @@
-use super::DocumentSchema;
-use super::Indexer;
-use crate::contracts::file_to_process::FileToProcess;
-use crate::error_adapter::log_and_return_error_string;
-use anyhow::{Context, Error, Result};
+use common::anyhow::{Context, Error, Result};
+use common::error_adapter::log_and_return_error_string;
+use common::tracing::{span, Level};
+use contracts::file_to_process::FileToProcess;
+use contracts::indexer::{DocumentSchema, Indexer};
 use std::ffi::{OsStr, OsString};
-use tracing::{span, Level};
 
 use pdf_extract::*;
 use regex::Regex;
@@ -57,7 +56,7 @@ impl Indexer for PdfIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contracts::file_to_process::new_file_to_process;
+    use contracts::file_to_process::new_file_to_process;
 
     use std::path::Path;
 

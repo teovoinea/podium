@@ -1,0 +1,13 @@
+[package]
+name = "mobile_net_v2_indexer"
+version = "0.1.0"
+authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+contracts = { path = "../../contracts" }
+common = { path = "../../common" }
+image = "0.23.3"
+tract-tensorflow = "0.10.10"
+tract-core = "0.10.10"
+once_cell = "1.3.1"

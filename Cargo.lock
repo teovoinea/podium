@@ -812,6 +812,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "tantivy",
+ "tokio",
+ "tracing",
+ "tracing-flame",
+ "tracing-futures",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "config"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -838,6 +852,15 @@ name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
+
+[[package]]
+name = "contracts"
+version = "0.1.0"
+dependencies = [
+ "blake2b_simd",
+ "common",
+ "tracing",
+]
 
 [[package]]
 name = "cookie"
@@ -1006,6 +1029,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "csv_indexer"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
+ "csv",
+]
+
+[[package]]
+name = "custom_tantivy"
+version = "0.1.0"
+dependencies = [
+ "blake2b_simd",
+ "common",
+ "contracts",
+ "indexers",
+ "tracing",
+]
+
+[[package]]
 name = "deflate"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1099,6 +1142,15 @@ dependencies = [
  "log 0.4.14",
  "strong-xml",
  "zip",
+]
+
+[[package]]
+name = "docx_indexer"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
+ "docx",
 ]
 
 [[package]]
@@ -1274,6 +1326,17 @@ dependencies = [
  "log 0.3.9",
  "num-traits 0.1.43",
  "serde 1.0.124",
+]
+
+[[package]]
+name = "exif_indexer"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
+ "kamadak-exif",
+ "lazy_static",
+ "reverse_geocoder",
 ]
 
 [[package]]
@@ -1705,6 +1768,24 @@ dependencies = [
  "png 0.16.6",
  "scoped_threadpool",
  "tiff",
+]
+
+[[package]]
+name = "indexers"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
+ "csv_indexer",
+ "docx_indexer",
+ "exif_indexer",
+ "mobile_net_v2_indexer",
+ "once_cell",
+ "pdf_indexer",
+ "pptx_indexer",
+ "spreadsheet_indexer",
+ "text_indexer",
+ "tracing",
 ]
 
 [[package]]
@@ -2184,6 +2265,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mobile_net_v2_indexer"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
+ "image 0.23.10",
+ "once_cell",
+ "tract-core",
+ "tract-tensorflow",
+]
+
+[[package]]
 name = "msoffice_pptx"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2507,6 +2600,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pdf_indexer"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
+ "pdf-extract",
+ "regex",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2657,40 +2760,30 @@ dependencies = [
  "anyhow",
  "app_dirs",
  "async-trait",
- "blake2b_simd",
- "calamine",
  "clap",
+ "common",
  "config",
+ "contracts",
  "criterion",
  "crossbeam",
- "csv",
- "docx",
+ "custom_tantivy",
  "failure",
  "futures",
- "image 0.23.10",
- "kamadak-exif",
+ "indexers",
  "lazy_static",
  "log 0.4.14",
- "msoffice_pptx",
- "msoffice_shared",
  "notify",
  "once_cell",
  "opener",
- "pdf-extract",
- "regex",
- "reverse_geocoder",
  "serde 1.0.124",
  "serde_derive",
  "serde_json",
  "simple_logger",
- "tantivy",
  "tokio",
  "tracing",
  "tracing-flame",
  "tracing-futures",
  "tracing-subscriber",
- "tract-core",
- "tract-tensorflow",
  "walkdir",
 ]
 
@@ -2705,6 +2798,16 @@ name = "postscript"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3c9ba7f8065a92300c604be066f1a9f694a63281ac602c43c0cbabafd625233"
+
+[[package]]
+name = "pptx_indexer"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
+ "msoffice_pptx",
+ "msoffice_shared",
+]
 
 [[package]]
 name = "ppv-lite86"
@@ -3353,6 +3456,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "spreadsheet_indexer"
+version = "0.1.0"
+dependencies = [
+ "calamine",
+ "common",
+ "contracts",
+]
+
+[[package]]
 name = "stable_deref_trait"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3585,6 +3697,14 @@ dependencies = [
  "redox_syscall",
  "remove_dir_all",
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "text_indexer"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "contracts",
 ]
 
 [[package]]

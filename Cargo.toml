@@ -4,29 +4,37 @@ version = "0.0.3"
 authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
 edition = "2018"
 
+[workspace]
+members = [
+    "src/common",
+    "src/contracts",
+    "src/custom_tantivy",
+    "src/indexers",
+    "src/indexers/csv",
+    "src/indexers/docx",
+    "src/indexers/exif",
+    "src/indexers/mobile_net_v2",
+    "src/indexers/pdf",
+    "src/indexers/pptx",
+    "src/indexers/spreadsheet",
+    "src/indexers/text",
+]
+
 [dependencies]
-tantivy = "0.13.2"
+contracts = { path = "src/contracts" }
+custom_tantivy = { path = "src/custom_tantivy" }
+indexers = { path = "src/indexers" }
+common = { path = "src/common" }
 walkdir = "2"
 app_dirs = "^1.2.1"
 notify = "4.0.0"
 config = "0.10.1"
 simple_logger = "1.5.0"
 log = "0.4.6"
-blake2b_simd = "0.5.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_derive = "1.0"
 lazy_static = "1.4.0"
-kamadak-exif = "0.3"
-reverse_geocoder = "1.0.1"
-pdf-extract = "0.4.6"
-regex = "1"
-image = "0.23.3"
-docx = "1.1.2"
-msoffice_pptx = "0.2.1"
-msoffice_shared = "0.1.1"
-csv = "1"
-calamine = "0.15.4"
 opener = "0.4.0"
 actix-web = "3.3.2"
 actix-rt = "1"
@@ -44,8 +52,6 @@ tracing-futures = "0.2.3"
 tracing-flame = "0.1.0"
 # TODO: once paperclip stabilizes actix open api generator - https://paperclip.waffles.space/actix-plugin.html
 # paperclip = { version = "0.3.0", features = ["actix"] }
-tract-tensorflow = "0.10.10"
-tract-core = "0.10.10"
 failure = "=0.1.7"
 
 [dev-dependencies]

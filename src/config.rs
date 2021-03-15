@@ -1,7 +1,4 @@
-use clap::{
-    app_from_crate, crate_authors, crate_description, crate_name, crate_version, App, Arg,
-    ArgMatches,
-};
+use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg};
 
 use tracing::Level;
 
