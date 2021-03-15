@@ -10,7 +10,7 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use app_dirs::*;
 use tracing::info;
-use tracing_subscriber::{fmt, layer::SubscriberExt, prelude::*, registry::Registry};
+use tracing_subscriber::{layer::SubscriberExt, prelude::*};
 
 
 use tracing_flame::FlameLayer;

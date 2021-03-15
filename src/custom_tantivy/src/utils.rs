@@ -1,5 +1,4 @@
 use common::tantivy::schema::*;
-use common::tracing::info;
 
 pub fn destructure_schema(schema: &Schema) -> (Field, Field, Field, Field) {
     (

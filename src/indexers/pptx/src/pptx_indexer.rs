@@ -1,6 +1,5 @@
 use common::anyhow;
 use common::anyhow::Result;
-use common::error_adapter::log_and_return_error_string;
 use common::tracing::{span, Level};
 use contracts::file_to_process::FileToProcess;
 use contracts::indexer::{DocumentSchema, Indexer};
