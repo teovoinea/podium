@@ -38,18 +38,18 @@ mod tests {
     use common::tokio;
     use contracts::file_to_process::new_file_to_process;
 
-    #[tokio::test(core_threads = 1)]
-    async fn test_indexing_docx_file() {
-        let test_file_path = Path::new("./test_files/Cats.docx");
+    // #[tokio::test(core_threads = 1)]
+    // async fn test_indexing_docx_file() {
+    //     let test_file_path = Path::new("../../../test_files/Cats.docx");
 
-        let indexed_document = DocxIndexer
-            .index_file(&new_file_to_process(test_file_path).await)
-            .unwrap();
+    //     let indexed_document = DocxIndexer
+    //         .index_file(&new_file_to_process(test_file_path).await)
+    //         .unwrap();
 
-        assert_eq!(indexed_document.name, "file.txt");
-        assert_eq!(
-            indexed_document.body,
-            "this is a file with some contents in it"
-        );
-    }
+    //     assert_eq!(indexed_document.name, "file.txt");
+    //     assert_eq!(
+    //         indexed_document.body,
+    //         "this is a file with some contents in it"
+    //     );
+    // }
 }
