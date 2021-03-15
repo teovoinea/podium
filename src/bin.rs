@@ -12,7 +12,6 @@ use app_dirs::*;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, prelude::*};
 
-
 use tracing_flame::FlameLayer;
 
 const APP_INFO: AppInfo = AppInfo {

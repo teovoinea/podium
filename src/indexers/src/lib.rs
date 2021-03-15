@@ -17,11 +17,11 @@ use pptx_indexer::pptx_indexer::PptxIndexer;
 use spreadsheet_indexer::spreadsheet_indexer::SpreadsheetIndexer;
 
 use std::collections::HashSet;
-use std::ffi::{OsString};
+use std::ffi::OsString;
 use std::iter::FromIterator;
 
 use common::tokio;
-use common::tracing::{instrument};
+use common::tracing::instrument;
 use common::tracing_futures;
 use once_cell::sync::Lazy;
 
