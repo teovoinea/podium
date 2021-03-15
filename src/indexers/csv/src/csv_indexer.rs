@@ -59,12 +59,12 @@ mod tests {
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_csv_file() {
-        let test_file_path = Path::new("./test_files/data.csv");
+        let test_file_path = Path::new("../../../test_files/data.csv");
         let indexed_document = CsvIndexer
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
 
-        assert_eq!(indexed_document.name, "./test_files/data.csv");
+        assert_eq!(indexed_document.name, "../../../test_files/data.csv");
         assert_eq!(
             indexed_document.body,
             "first_name last_name street city state postal_code "
