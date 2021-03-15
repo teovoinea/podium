@@ -120,8 +120,8 @@ mod tests {
     use std::path::Path;
 
     #[tokio::test(core_threads = 1)]
-    async fn test_indexing_text_file() {
-        let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
+    async fn test_indexing_exif_file() {
+        let test_file_path = Path::new("../../../test_files/IMG_2551.jpeg");
         let indexed_document = ExifIndexer
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn test_supports_text_extension() {
+    fn test_supports_exif_extension() {
         assert_eq!(true, ExifIndexer.supports_extension(OsStr::new("tif")));
         assert_eq!(true, ExifIndexer.supports_extension(OsStr::new("tiff")));
         assert_eq!(true, ExifIndexer.supports_extension(OsStr::new("jpg")));

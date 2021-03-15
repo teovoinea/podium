@@ -199,12 +199,12 @@ mod tests {
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_mobile_net_v2_file() {
-        let test_file_path = Path::new("./test_files/IMG_2551.jpeg");
+        let test_file_path = Path::new("../../../test_files/IMG_2551.jpeg");
         let indexed_document = MobileNetV2Indexer
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
 
-        assert_eq!(indexed_document.name, "./test_files/IMG_2551.jpeg");
+        assert_eq!(indexed_document.name, "../../../test_files/IMG_2551.jpeg");
         assert_eq!(indexed_document.body, "eggnog");
     }
 

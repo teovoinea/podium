@@ -51,7 +51,7 @@ mod tests {
 
     #[tokio::test(core_threads = 1)]
     async fn test_indexing_text_file() {
-        let test_file_path = Path::new("./test_files/file.txt");
+        let test_file_path = Path::new("../../../test_files/file.txt");
         let indexed_document = TextIndexer
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
