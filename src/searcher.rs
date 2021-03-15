@@ -1,10 +1,10 @@
+use common::tantivy::collector::TopDocs;
+use common::tantivy::query::QueryParser;
+use common::tantivy::schema::*;
+use common::tantivy::Index;
+use common::tantivy::IndexReader;
+use common::tracing::info;
 use serde::{Deserialize, Serialize};
-use tantivy::collector::TopDocs;
-use tantivy::query::QueryParser;
-use tantivy::schema::*;
-use tantivy::Index;
-use tantivy::IndexReader;
-use tracing::info;
 
 use crate::custom_tantivy::{path_facet_convert::TantivyConvert, utils::destructure_schema};
 

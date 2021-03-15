@@ -1,14 +1,14 @@
-use super::DocumentSchema;
-use super::Indexer;
-use crate::contracts::file_to_process::FileToProcess;
+use contracts::file_to_process::FileToProcess;
+use contracts::indexer::{DocumentSchema, Indexer};
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::io::Cursor;
 
-use anyhow::{Error, Result};
+use common::anyhow;
+use common::anyhow::{Error, Result};
+use common::tracing::{span, Level};
 use image::ImageFormat;
 use once_cell::sync::Lazy;
-use tracing::{span, Level};
 use tract_core::ndarray;
 use tract_tensorflow::prelude::*;
 
@@ -16,7 +16,7 @@ static MODEL: Lazy<TypedModel> = Lazy::new(|| {
     span!(Level::INFO, "mobile_net_v2_indexer: Preparing typed model").in_scope(|| {
         let mut model = span!(Level::INFO, "mobile_net_v2_indexer: Loading model").in_scope(|| {
             // load the model
-            let model_bytes = include_bytes!("../../models/mobilenet_v2_1.4_224_frozen.pb");
+            let model_bytes = include_bytes!("../../../../models/mobilenet_v2_1.4_224_frozen.pb");
             let mut model_bytes = Cursor::new(&model_bytes[..]);
             tract_tensorflow::tensorflow()
                 .model_for_read(&mut model_bytes)
@@ -49,7 +49,7 @@ static MODEL: Lazy<TypedModel> = Lazy::new(|| {
 });
 
 static LABELS: Lazy<Vec<&'static str>> = Lazy::new(|| {
-    let labels: Vec<&str> = include_str!("../../models/imagenet_slim_labels.txt")
+    let labels: Vec<&str> = include_str!("../../../../models/imagenet_slim_labels.txt")
         .lines()
         .collect();
     labels
@@ -193,7 +193,8 @@ impl Indexer for MobileNetV2Indexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contracts::file_to_process::new_file_to_process;
+    use common::tokio;
+    use contracts::file_to_process::new_file_to_process;
     use std::path::Path;
 
     #[tokio::test(core_threads = 1)]

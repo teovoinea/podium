@@ -1,14 +1,13 @@
-use super::DocumentSchema;
-use super::Indexer;
-use crate::contracts::file_to_process::FileToProcess;
-use crate::error_adapter::log_and_return_error_string;
+use common::error_adapter::log_and_return_error_string;
+use contracts::file_to_process::FileToProcess;
+use contracts::indexer::{DocumentSchema, Indexer};
 use std::ffi::{OsStr, OsString};
 use std::io::Cursor;
 
-use anyhow::{Context, Error, Result};
+use common::anyhow::{Context, Error, Result};
+use common::tracing::{span, Level};
 use exif::{Rational, Tag, Value};
 use reverse_geocoder::{Locations, Record, ReverseGeocoder};
-use tracing::{span, Level};
 
 lazy_static! {
     static ref LOCATIONS: Locations = Locations::from_memory();
@@ -116,7 +115,8 @@ fn def_to_dec_dec(deg: f64, min: f64, sec: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contracts::file_to_process::new_file_to_process;
+    use common::tokio;
+    use contracts::file_to_process::new_file_to_process;
     use std::path::Path;
 
     #[tokio::test(core_threads = 1)]

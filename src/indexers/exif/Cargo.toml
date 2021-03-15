@@ -1,0 +1,12 @@
+[package]
+name = "exif_indexer"
+version = "0.1.0"
+authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+contracts = { path = "../../contracts" }
+common = { path = "../../common" }
+lazy_static = "1.4.0"
+kamadak-exif = "0.3"
+reverse_geocoder = "1.0.1"

@@ -1,0 +1,11 @@
+[package]
+name = "pdf_indexer"
+version = "0.1.0"
+authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+contracts = { path = "../../contracts" }
+common = { path = "../../common" }
+pdf-extract = "0.4.6"
+regex = "1"

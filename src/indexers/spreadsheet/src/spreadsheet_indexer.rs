@@ -1,10 +1,10 @@
-use super::DocumentSchema;
-use super::Indexer;
-use crate::contracts::file_to_process::FileToProcess;
-use crate::error_adapter::log_and_return_error_string;
-use anyhow::Result;
+use common::anyhow;
+use common::anyhow::Result;
+use common::error_adapter::log_and_return_error_string;
+use common::tracing::{span, Level};
+use contracts::file_to_process::FileToProcess;
+use contracts::indexer::{DocumentSchema, Indexer};
 use std::ffi::{OsStr, OsString};
-use tracing::{span, Level};
 
 use calamine::{open_workbook, Reader, Xlsx};
 
@@ -68,7 +68,8 @@ impl Indexer for SpreadsheetIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contracts::file_to_process::new_file_to_process;
+    use common::tokio;
+    use contracts::file_to_process::new_file_to_process;
 
     use std::path::Path;
 

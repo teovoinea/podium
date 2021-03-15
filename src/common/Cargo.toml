@@ -1,0 +1,17 @@
+[package]
+name = "common"
+version = "0.1.0"
+authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tantivy = "0.13.2"
+tokio = { version = "0.2", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.2"
+tracing-futures = "0.2.3"
+tracing-flame = "0.1.0"
+async-trait = "0.1.35"
+anyhow = "1.0"

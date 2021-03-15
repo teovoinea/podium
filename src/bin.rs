@@ -1,6 +1,6 @@
 extern crate podium_lib;
 use podium_lib::config::{get_config, AppConfig};
-use podium_lib::contracts::app_state::*;
+use podium_lib::routes::app_state::*;
 use podium_lib::routes::search;
 use podium_lib::tantivy_process::{start_tantivy, tantivy_init, TantivyConfig};
 

@@ -1,8 +1,10 @@
-use crate::custom_tantivy::utils::calculate_hash;
+use blake2b_simd::blake2b;
+use common::tokio::fs;
+use common::tracing::*;
+use common::tracing::{info_span, instrument};
+use common::tracing_futures;
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
-use tokio::fs;
-use tracing::{info_span, instrument};
 
 #[derive(Debug, Clone)]
 pub struct FileToProcess {
@@ -31,4 +33,10 @@ pub async fn new_file_to_process<T: AsRef<Path> + Debug>(path: T) -> FileToProce
         hash: hash,
         contents: contents,
     }
+}
+
+fn calculate_hash(input: &[u8]) -> blake2b_simd::Hash {
+    let file_hash = blake2b(input);
+    info!("Hash of file is: {:?}", file_hash);
+    file_hash
 }

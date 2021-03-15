@@ -1,0 +1,10 @@
+[package]
+name = "contracts"
+version = "0.1.0"
+authors = ["Teodor Voinea <voinea.teodor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+common = { path="../common" }
+blake2b_simd = "0.5.10"
+tracing = "0.1"

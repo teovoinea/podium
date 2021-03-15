@@ -1,4 +1,4 @@
-use crate::contracts::app_state::*;
+use crate::routes::app_state::*;
 use actix_web::{web, HttpRequest, HttpResponse};
 use tracing::{info, span, Level};
 

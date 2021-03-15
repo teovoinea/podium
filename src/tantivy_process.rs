@@ -4,9 +4,10 @@ use crate::file_watcher::*;
 use crate::indexers::Analyzer;
 use crate::searcher::Searcher;
 
-use tantivy::directory::*;
-use tantivy::{Index, ReloadPolicy};
-use tracing::{info, span, Level};
+use common::tantivy;
+use common::tantivy::directory::*;
+use common::tantivy::{Index, ReloadPolicy};
+use common::tracing::{info, span, Level};
 use walkdir::WalkDir;
 
 use std::fs;
