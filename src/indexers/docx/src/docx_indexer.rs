@@ -1,12 +1,8 @@
-use common::anyhow::{Context, Error, Result};
-use common::tracing::span;
+use common::anyhow::Result;
+
 use contracts::file_to_process::FileToProcess;
 use contracts::indexer::{DocumentSchema, Indexer};
 use std::ffi::{OsStr, OsString};
-use std::fs;
-use std::path::Path;
-
-use docx::*;
 
 pub struct DocxIndexer;
 
@@ -21,7 +17,7 @@ impl Indexer for DocxIndexer {
 
     // Parsing Cats.docx panics the `docx` library...
     // We're just going to leave this out for now
-    fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
+    fn index_file(&self, _file_to_process: &FileToProcess) -> Result<DocumentSchema> {
         // let mut docx = Docx::from_file(file_to_process.path).unwrap();
         // dbg!(docx);
 
@@ -34,9 +30,6 @@ impl Indexer for DocxIndexer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use common::tokio;
-    use contracts::file_to_process::new_file_to_process;
 
     // #[tokio::test]
     // async fn test_indexing_docx_file() {

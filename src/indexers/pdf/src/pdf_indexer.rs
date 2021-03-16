@@ -56,9 +56,6 @@ impl Indexer for PdfIndexer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use contracts::file_to_process::new_file_to_process;
-
-    use std::path::Path;
 
     // #[tokio::test]
     // async fn test_indexing_pdf_file() {
