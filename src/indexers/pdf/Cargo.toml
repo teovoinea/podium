@@ -7,6 +7,5 @@ edition = "2018"
 [dependencies]
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
-# TODO: Fix the pdf indexer
 pdf-extract = "0.6"
 regex = "1"
