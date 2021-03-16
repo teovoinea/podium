@@ -9,9 +9,9 @@ use std::io;
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use app_dirs::*;
+use tokio;
 use tracing::info;
 use tracing_subscriber::{fmt, layer::SubscriberExt, prelude::*, registry::Registry};
-use tokio;
 
 use std::{fs::File, io::BufWriter};
 use tracing_flame::FlameLayer;
