@@ -10,8 +10,10 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use app_dirs::*;
 use tracing::info;
-use tracing_subscriber::{layer::SubscriberExt, prelude::*};
+use tracing_subscriber::{fmt, layer::SubscriberExt, prelude::*, registry::Registry};
+use tokio;
 
+use std::{fs::File, io::BufWriter};
 use tracing_flame::FlameLayer;
 
 const APP_INFO: AppInfo = AppInfo {
@@ -81,7 +83,7 @@ fn get_or_create_settings(app_config: &AppConfig) -> TantivyConfig {
 
 fn setup_global_subscriber(config: &AppConfig) -> impl Drop {
     let (flame_layer, _guard) = FlameLayer::with_file("./tracing.folded").unwrap();
-    let _t = tracing_subscriber::fmt()
+    let t = tracing_subscriber::fmt()
         .with_max_level(config.verbosity.clone())
         .finish()
         .with(flame_layer)

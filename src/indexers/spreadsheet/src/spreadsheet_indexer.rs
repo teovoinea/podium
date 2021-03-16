@@ -72,7 +72,7 @@ mod tests {
 
     use std::path::Path;
 
-    #[tokio::test(core_threads = 1)]
+    #[tokio::test]
     async fn test_indexing_spreadsheet_file() {
         let test_file_path = Path::new("../../../test_files/Cats.xlsx");
         let indexed_document = SpreadsheetIndexer

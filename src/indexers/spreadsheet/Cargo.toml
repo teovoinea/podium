@@ -7,4 +7,4 @@ edition = "2018"
 [dependencies]
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
-calamine = "0.15.4"
+calamine = "0.18"

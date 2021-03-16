@@ -197,7 +197,7 @@ mod tests {
     use contracts::file_to_process::new_file_to_process;
     use std::path::Path;
 
-    #[tokio::test(core_threads = 1)]
+    #[tokio::test]
     async fn test_indexing_mobile_net_v2_file() {
         let test_file_path = Path::new("../../../test_files/IMG_2551.jpeg");
         let indexed_document = MobileNetV2Indexer
