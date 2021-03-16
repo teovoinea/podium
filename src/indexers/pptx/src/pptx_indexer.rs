@@ -100,7 +100,7 @@ mod tests {
 
     use std::path::Path;
 
-    #[tokio::test(core_threads = 1)]
+    #[tokio::test]
     async fn test_indexing_pptx_file() {
         let test_file_path = Path::new("../../../test_files/Cats.pptx");
         let indexed_document = PptxIndexer

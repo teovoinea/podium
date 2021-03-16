@@ -38,7 +38,7 @@ mod tests {
     use common::tokio;
     use contracts::file_to_process::new_file_to_process;
 
-    // #[tokio::test(core_threads = 1)]
+    // #[tokio::test]
     // async fn test_indexing_docx_file() {
     //     let test_file_path = Path::new("../../../test_files/Cats.docx");
 

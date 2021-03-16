@@ -8,5 +8,5 @@ edition = "2018"
 common = { path="../common" }
 contracts = { path = "../contracts" }
 indexers = { path = "../indexers" }
-blake2b_simd = "0.5.10"
+blake2b_simd = "0.5"
 tracing = "0.1"

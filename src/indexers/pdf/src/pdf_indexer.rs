@@ -60,7 +60,7 @@ mod tests {
 
     use std::path::Path;
 
-    // #[tokio::test(core_threads = 1)]
+    // #[tokio::test]
     // async fn test_indexing_pdf_file() {
     //     let test_file_path = Path::new("./test_files/Cats.pdf");
     //     let indexed_document = PdfIndexer
