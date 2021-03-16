@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate criterion;
+use criterion::async_executor::AsyncExecutor;
 use criterion::Criterion;
 use criterion::*;
-use criterion::{async_executor::AsyncExecutor};
 
 use contracts::file_to_process::new_file_to_process;
 use contracts::indexer::Indexer;

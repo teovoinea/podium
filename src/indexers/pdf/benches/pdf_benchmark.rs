@@ -1,15 +1,6 @@
 #[macro_use]
 extern crate criterion;
 
-
-
-
-
-
-
-
-
-
 use common::tokio;
 
 // fn bench_indexing_pdf_file(c: &mut Criterion) {
