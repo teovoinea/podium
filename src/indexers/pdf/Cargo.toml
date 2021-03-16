@@ -7,6 +7,12 @@ edition = "2018"
 [dependencies]
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
-# TODO: Fix the pdf indexer
 pdf-extract = "0.6"
 regex = "1"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "pdf_benchmark"
+harness = false

@@ -53,7 +53,7 @@ tracing-flame = "0.1.0"
 failure = "=0.1.7"
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = "0.3"
 
 [lib]
 name = "podium_lib"
