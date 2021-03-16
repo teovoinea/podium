@@ -2,7 +2,7 @@
 extern crate criterion;
 use criterion::Criterion;
 use criterion::*;
-use criterion::{async_executor::AsyncExecutor, black_box};
+use criterion::{async_executor::AsyncExecutor};
 
 use contracts::file_to_process::new_file_to_process;
 use contracts::indexer::Indexer;
@@ -19,7 +19,7 @@ fn bench_indexing_spreadsheet_file(c: &mut Criterion) {
 
     c.bench_function("indexing_spreadsheet_file", |b| {
         b.iter(|| {
-            let indexed_document = SpreadsheetIndexer.index_file(&ftp).unwrap();
+            let _indexed_document = SpreadsheetIndexer.index_file(&ftp).unwrap();
         });
     });
 }

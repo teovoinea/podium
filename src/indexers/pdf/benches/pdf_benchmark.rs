@@ -1,14 +1,14 @@
 #[macro_use]
 extern crate criterion;
-use criterion::Criterion;
-use criterion::*;
-use criterion::{async_executor::AsyncExecutor, black_box};
 
-use contracts::file_to_process::new_file_to_process;
-use contracts::indexer::Indexer;
-use pdf_indexer::pdf_indexer::PdfIndexer;
-use std::path::Path;
-use tokio::runtime::Runtime;
+
+
+
+
+
+
+
+
 
 use common::tokio;
 
