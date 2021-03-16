@@ -7,3 +7,10 @@ edition = "2018"
 [dependencies]
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "text_benchmark"
+harness = false

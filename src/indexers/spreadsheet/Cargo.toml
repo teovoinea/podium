@@ -8,3 +8,10 @@ edition = "2018"
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
 calamine = "0.18"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "spreadsheet_benchmark"
+harness = false

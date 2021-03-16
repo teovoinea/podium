@@ -9,3 +9,10 @@ contracts = { path = "../../contracts" }
 common = { path = "../../common" }
 msoffice_pptx = "0.2.1"
 msoffice_shared = "0.1.1"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "pptx_benchmark"
+harness = false

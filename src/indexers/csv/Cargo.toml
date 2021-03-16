@@ -8,3 +8,10 @@ edition = "2018"
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
 csv = "1"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "csv_benchmark"
+harness = false

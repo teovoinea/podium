@@ -11,3 +11,10 @@ image = "0.23"
 tract-tensorflow = "0.12"
 tract-core = "0.12"
 once_cell = "1.7"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "mobile_net_v2_benchmark"
+harness = false
