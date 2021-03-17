@@ -3,6 +3,7 @@ import { Icon, InlineIcon } from '@iconify/react';
 import bxSearch from '@iconify/icons-bx/bx-search';
 import SearchResult from '../../contracts/SearchResult';
 import SearchResults from './SearchResults';
+import isNullOrWhitespace from '../../utils/string-utils';
 
 require('./SearchInput.scss');
 
@@ -33,6 +34,7 @@ const SearchInput: React.FunctionComponent<Props> = ({ query, results, search, a
     <div className="searchRoot">
         <div className="searchInputRoot">
             <Icon icon={bxSearch} id="magnifyingGlass" />
+            { isNullOrWhitespace(query) ? <span className="searchPrompt">SEARCH</span> : null }
             <input
                 className="searchInput"
                 type="text"

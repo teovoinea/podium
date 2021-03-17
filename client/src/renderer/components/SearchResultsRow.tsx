@@ -3,6 +3,7 @@ import { Icon, InlineIcon } from '@iconify/react';
 import typescriptIcon from '@iconify/icons-logos/typescript-icon';
 import { shell } from 'electron';
 import SearchResult from '../../contracts/SearchResult';
+import * as path from 'path';
 
 export interface Props {
     result: SearchResult;
@@ -18,7 +19,7 @@ const SearchResultsRow: React.FunctionComponent<Props> = ({ result }) => (
     <div className="searchResultsRow" onClick={() => openSelectedFile(result)}>
         <div className="searchResultsRowContent">
             <Icon icon={typescriptIcon} className="searchResultsRowIcon" />
-            <span className="searchResultsRowText">{result.location}</span>
+            <span className="searchResultsRowText">{path.basename(result.location)}</span>
         </div>
     </div>
 );

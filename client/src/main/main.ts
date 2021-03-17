@@ -22,9 +22,10 @@ const createWindow = async () => {
 
     win = new BrowserWindow({
         width: 680,
-        height: 50,
+        height: 57,
         frame: false,
-        /* transparent: true, */ resizable: false
+        /* transparent: true, */ 
+        // resizable: false
     });
 
     if (process.env.NODE_ENV !== 'production') {

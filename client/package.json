@@ -88,6 +88,7 @@
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.3.3",
     "@hot-loader/react-dom": "^16.8.6",
+    "@iconify-icons/clarity": "^1.1.0",
     "@iconify/icons-bx": "^1.0.1",
     "@iconify/icons-logos": "^1.0.9",
     "@iconify/icons-mdi": "^1.0.81",
