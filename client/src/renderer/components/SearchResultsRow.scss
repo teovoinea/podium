@@ -1,11 +1,24 @@
-.searchResultsRowContent {
-    padding: 8px;
-    flex-direction: row;
+.searchResultsRow {
+    background-color: rgba(108,108,108,0.4);
+    margin-top: 5px;
+    :hover {
+        background-color: #676767;
+        outline-style: solid;
+        outline-width: 1px;
+        outline-color: white;
+    }
 }
 
-.searchResultsRow :hover,
-.searchResultsRow :hover > * {
-    background-color: #043fc6;
+.searchResultsRoot {
+    background-color: #2d2d2d;
+}
+.searchResultsRowContent {
+    flex-direction: row;
+    padding: 8px;
+
+    :hover {
+        outline: none;
+    }
 }
 
 .searchResultsRowIcon {

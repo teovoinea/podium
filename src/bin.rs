@@ -47,7 +47,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .wrap(
                 Cors::default() // <- Construct CORS middleware builder
-                    .send_wildcard(),
+                    .allow_any_origin(),
             )
             .app_data(app_state.clone())
             .configure(search::server_config)

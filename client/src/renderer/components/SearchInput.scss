@@ -1,4 +1,20 @@
+.searchPrompt,
+.searchRoot,
+.searchInputRoot,
 .searchInput {
+    color: #dfdfdf;
+    background-color: #2d2d2d;
+}
+
+.searchPrompt {
+    position: absolute;
+    margin-left: 1.5em;
+    font-size: 25px;
+    color: rgba(255,255,255,0.6);
+    pointer-events: none;
+}
+
+.searchInput{
     flex-grow: 1;
     line-height: 2.5;
     border: none;
@@ -20,4 +36,10 @@
 
 #magnifyingGlass {
     font-size: 2em;
+}
+
+.searchRoot {
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 2.5%;
 }
