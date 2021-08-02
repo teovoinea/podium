@@ -6,7 +6,6 @@ use podium_lib::tantivy_process::{start_tantivy, tantivy_init, TantivyConfig};
 
 use std::io;
 
-use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use app_dirs::*;
 use tokio;
@@ -20,8 +19,7 @@ const APP_INFO: AppInfo = AppInfo {
     author: "Teodor Voinea",
 };
 
-#[tokio::main]
-async fn main() -> io::Result<()> {
+async fn async_main() -> io::Result<()> {
     let config = get_config();
 
     setup_global_subscriber(&config);
@@ -39,24 +37,16 @@ async fn main() -> io::Result<()> {
             .unwrap();
     });
 
-    let sys = actix_rt::System::run_in_tokio("server", &local);
-
     let app_state = web::Data::new(AppState { searcher: searcher });
 
     let server_res = HttpServer::new(move || {
         App::new()
-            .wrap(
-                Cors::default() // <- Construct CORS middleware builder
-                    .allow_any_origin(),
-            )
             .app_data(app_state.clone())
             .configure(search::server_config)
     })
     .bind(format!("127.0.0.1:{}", config.port))?
     .run()
     .await?;
-
-    sys.await?;
 
     Ok(server_res)
 
@@ -89,4 +79,16 @@ fn setup_global_subscriber(config: &AppConfig) -> impl Drop {
         .try_init();
 
     _guard
+}
+
+fn main() {
+    actix_web::rt::System::with_tokio_rt(|| {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .worker_threads(8)
+            .thread_name("main-tokio")
+            .build()
+            .unwrap()
+    })
+    .block_on(async_main());
 }
