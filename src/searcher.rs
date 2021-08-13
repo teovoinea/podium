@@ -56,7 +56,6 @@ impl Searcher {
             .map(|retrieved_doc| {
                 let title = retrieved_doc
                     .get_all(title)
-                    .iter()
                     .map(|val| val.text())
                     .fold(String::new(), |mut acc, x| {
                         acc.push_str(x.unwrap());
@@ -65,7 +64,6 @@ impl Searcher {
                     });
                 let location = retrieved_doc
                     .get_all(location)
-                    .iter()
                     .filter_map(|val| match &val {
                         Value::Facet(loc_str) => Some(Path::from_facet_value(loc_str)),
                         _ => None,
@@ -73,7 +71,6 @@ impl Searcher {
                     .collect();
                 let body = retrieved_doc
                     .get_all(body)
-                    .iter()
                     .map(|val| val.text())
                     .fold(String::new(), |mut acc, x| {
                         acc.push_str(x.unwrap());
