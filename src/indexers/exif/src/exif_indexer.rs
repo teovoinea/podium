@@ -86,13 +86,11 @@ impl Indexer for ExifIndexer {
                 }
             });
 
-            let res = span!(Level::INFO, "exif_indexer: Look up the coordinates").in_scope(|| -> Result<&&Record, Error>{
+            let res = span!(Level::INFO, "exif_indexer: Look up the coordinates").in_scope(|| -> Result<&Record, Error>{
                 Ok(
-                    GEOCODER.search(&[lat, lon])
+                    GEOCODER.search((lat, lon))
                         .with_context(|| log_and_return_error_string(format!("exif_indexer: Failed to search for location in geocoder: lat = {:?} lon = {:?}", lat, lon)))?
-                        .get(0)
-                        .with_context(|| log_and_return_error_string(format!("exif_indexer: Failed to get first result from search in geocoder")))?
-                        .1
+                        .record
                 )
             })?;
 

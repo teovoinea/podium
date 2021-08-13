@@ -9,7 +9,7 @@ contracts = { path = "../../contracts" }
 common = { path = "../../common" }
 lazy_static = "1"
 kamadak-exif = "0.3"
-reverse_geocoder = "1.0.1"
+reverse_geocoder = "2"
 
 [dev-dependencies]
 criterion = "0.3"
