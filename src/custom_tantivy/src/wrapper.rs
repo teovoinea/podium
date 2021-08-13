@@ -45,14 +45,16 @@ impl TantivyWrapper {
             let mut retrieved_doc = searcher.doc(doc_address).unwrap();
             let is_found = !retrieved_doc
                 .get_all(location)
-                .contains(&&Value::from(Facet::from_text(location_facet)));
+                .any(|value| value == &Value::from(Facet::from_text(location_facet).unwrap()));
+            // .contains(&&Value::from(Facet::from_text(location_facet).unwrap()));
             info!(
                 "Is this current file's location already in the document? {:?}",
                 is_found
             );
             if !retrieved_doc
                 .get_all(location)
-                .contains(&&Value::from(Facet::from_text(location_facet)))
+                .any(|value| value == &Value::from(Facet::from_text(location_facet).unwrap()))
+            // .contains(&&Value::from(Facet::from_text(location_facet).unwrap()))
             {
                 // If this location of the file isn't already stored in the document, add it
                 retrieved_doc.add_facet(location, location_facet);
@@ -163,11 +165,11 @@ impl TantivyWrapper {
     /// If this path is the last remaining path associated to this document, will dete the document
     pub fn remove(&self, path_buf: &PathBuf) {
         // Remove the old document
-        let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap());
+        let location_facet = Facet::from_text(path_buf.as_path().to_str().unwrap()).unwrap();
         let (_title, _hash_field, location, _body) = destructure_schema(&self.schema);
         if let Some(old_doc) = self.delete_doc_by_location(location, &location_facet) {
             info!("Deleted old document succesfully");
-            let mut locations = old_doc.get_all(location);
+            let mut locations = old_doc.get_all(location).collect::<Vec<&Value>>();
             info!("Current locations for the doc are: {:?}", locations);
             if locations.len() > 1 {
                 info!("Removing old document but there are multiple locations");

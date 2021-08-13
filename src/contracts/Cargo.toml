@@ -6,5 +6,5 @@ edition = "2018"
 
 [dependencies]
 common = { path="../common" }
-blake2b_simd = "0.5.10"
+blake2b_simd = "0.5"
 tracing = "0.1"

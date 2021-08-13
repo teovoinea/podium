@@ -54,32 +54,29 @@ impl Searcher {
             .into_iter()
             .map(|(_score, doc_address)| searcher.doc(doc_address).unwrap())
             .map(|retrieved_doc| {
-                let title = retrieved_doc
-                    .get_all(title)
-                    .iter()
-                    .map(|val| val.text())
-                    .fold(String::new(), |mut acc, x| {
+                let title = retrieved_doc.get_all(title).map(|val| val.text()).fold(
+                    String::new(),
+                    |mut acc, x| {
                         acc.push_str(x.unwrap());
                         acc.push_str(" ");
                         acc
-                    });
+                    },
+                );
                 let location = retrieved_doc
                     .get_all(location)
-                    .iter()
                     .filter_map(|val| match &val {
                         Value::Facet(loc_str) => Some(Path::from_facet_value(loc_str)),
                         _ => None,
                     })
                     .collect();
-                let body = retrieved_doc
-                    .get_all(body)
-                    .iter()
-                    .map(|val| val.text())
-                    .fold(String::new(), |mut acc, x| {
+                let body = retrieved_doc.get_all(body).map(|val| val.text()).fold(
+                    String::new(),
+                    |mut acc, x| {
                         acc.push_str(x.unwrap());
                         acc.push_str(" ");
                         acc
-                    });
+                    },
+                );
                 Response {
                     title,
                     location,
