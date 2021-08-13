@@ -12,12 +12,14 @@ pub struct AppConfig {
 }
 
 pub fn get_config() -> AppConfig {
+    let home_dir = dirs::home_dir().unwrap();
     let matches = app_from_crate!()
         .arg(
             Arg::with_name("scan-directories")
                 .short("s")
                 .long("scan-directories")
-                .required(true)
+                .required(false)
+                .default_value(home_dir.to_str().unwrap())
                 .takes_value(true)
                 .use_delimiter(true)
                 .require_delimiter(true)

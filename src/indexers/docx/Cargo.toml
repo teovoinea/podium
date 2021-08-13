@@ -7,4 +7,4 @@ edition = "2018"
 [dependencies]
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
-docx = "1.1.2"
+# docx = "1.1.2"

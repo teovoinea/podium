@@ -25,9 +25,11 @@ contracts = { path = "src/contracts" }
 custom_tantivy = { path = "src/custom_tantivy" }
 indexers = { path = "src/indexers" }
 common = { path = "src/common" }
+
 walkdir = "2"
 app_dirs = "1"
 notify = "4"
+dirs = "3"
 config = "0.10"
 simple_logger = "1.11"
 log = "0.4"
