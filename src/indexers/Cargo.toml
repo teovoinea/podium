@@ -15,5 +15,5 @@ spreadsheet_indexer = { path = "spreadsheet" }
 text_indexer = { path = "text" }
 contracts = { path = "../contracts" }
 common = { path = "../common" }
-once_cell = "1.7"
+once_cell = "1"
 tracing = "0.1"
