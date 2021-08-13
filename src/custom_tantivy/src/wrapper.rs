@@ -45,16 +45,16 @@ impl TantivyWrapper {
             let mut retrieved_doc = searcher.doc(doc_address).unwrap();
             let is_found = !retrieved_doc
                 .get_all(location)
-                .any(|value| {value == &Value::from(Facet::from_text(location_facet).unwrap())});
-                // .contains(&&Value::from(Facet::from_text(location_facet).unwrap()));
+                .any(|value| value == &Value::from(Facet::from_text(location_facet).unwrap()));
+            // .contains(&&Value::from(Facet::from_text(location_facet).unwrap()));
             info!(
                 "Is this current file's location already in the document? {:?}",
                 is_found
             );
             if !retrieved_doc
                 .get_all(location)
-                .any(|value| { value == &Value::from(Facet::from_text(location_facet).unwrap())})
-                // .contains(&&Value::from(Facet::from_text(location_facet).unwrap()))
+                .any(|value| value == &Value::from(Facet::from_text(location_facet).unwrap()))
+            // .contains(&&Value::from(Facet::from_text(location_facet).unwrap()))
             {
                 // If this location of the file isn't already stored in the document, add it
                 retrieved_doc.add_facet(location, location_facet);

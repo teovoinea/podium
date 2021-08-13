@@ -17,9 +17,7 @@ pub fn build_schema() -> Schema {
 
     schema_builder.add_text_field("hash", STRING | STORED);
 
-    let location_facet_options = FacetOptions::default()
-        .set_indexed()
-        .set_stored();
+    let location_facet_options = FacetOptions::default().set_indexed().set_stored();
 
     schema_builder.add_facet_field("location", location_facet_options);
 
