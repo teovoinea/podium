@@ -114,9 +114,9 @@ dependencies = [
 
 [[package]]
 name = "actix-http"
-version = "3.0.0-beta.8"
+version = "3.0.0-beta.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cd16d6b846983ffabfd081e1a67abd7698094fcbe7b3d9bcf1acbc6f546a516"
+checksum = "dd38a862fa7fead2b47ee55e550982aba583ebc7365ccf0155b49934ad6f16f9"
 dependencies = [
  "actix-codec 0.4.0",
  "actix-rt 2.2.0",
@@ -183,6 +183,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ad299af73649e1fc893e333ccf86f377751eb95ff875d095131574c6f43452c"
 dependencies = [
  "bytestring",
+ "http",
+ "log",
+ "regex",
+ "serde 1.0.130",
+]
+
+[[package]]
+name = "actix-router"
+version = "0.5.0-beta.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36b95ce0d76d1aa2f98b681702807475ade0f99bd4552546a6843a966d42ea3d"
+dependencies = [
+ "bytestring",
+ "firestorm",
  "http",
  "log",
  "regex",
@@ -370,7 +384,7 @@ dependencies = [
  "actix-codec 0.3.0",
  "actix-http 2.2.0",
  "actix-macros 0.1.3",
- "actix-router",
+ "actix-router 0.2.7",
  "actix-rt 1.1.1",
  "actix-server 1.0.4",
  "actix-service 1.0.6",
@@ -402,19 +416,19 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
-version = "4.0.0-beta.8"
+version = "4.0.0-beta.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c503f726f895e55dac39adeafd14b5ee00cc956796314e9227fc7ae2e176f443"
+checksum = "d34aa2b23ec9c7c9a799b3cf9258f67c91b18ac3f0f5f484e175c7ac46739bb5"
 dependencies = [
  "actix-codec 0.4.0",
- "actix-http 3.0.0-beta.8",
+ "actix-http 3.0.0-beta.10",
  "actix-macros 0.2.1",
- "actix-router",
+ "actix-router 0.5.0-beta.2",
  "actix-rt 2.2.0",
  "actix-server 2.0.0-beta.5",
  "actix-service 2.0.0",
  "actix-utils 3.0.0",
- "actix-web-codegen 0.5.0-beta.3",
+ "actix-web-codegen 0.5.0-beta.4",
  "ahash",
  "bytes 1.0.1",
  "cfg-if 1.0.0",
@@ -454,10 +468,11 @@ dependencies = [
 
 [[package]]
 name = "actix-web-codegen"
-version = "0.5.0-beta.3"
+version = "0.5.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d048c6986743105c1e8e9729fbc8d5d1667f2f62393a58be8d85a7d9a5a6c8d"
+checksum = "4a11fd6f322120a74b23327e778ef0a4950b1f44a2b76468a69316a150f5c6dd"
 dependencies = [
+ "actix-router 0.5.0-beta.2",
  "proc-macro2 1.0.28",
  "quote 1.0.9",
  "syn 1.0.74",
@@ -1533,6 +1548,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "firestorm"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31586bda1b136406162e381a3185a506cdfc1631708dd40cba2f6628d8634499"
+
+[[package]]
 name = "fixedbitset"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1880,9 +1901,9 @@ dependencies = [
 
 [[package]]
 name = "httparse"
-version = "1.4.1"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3a87b616e37e93c22fb19bcd386f02f3af5ea98a25670ad0fce773de23c5e68"
+checksum = "acd94fdbe1d4ff688b67b04eee2e17bd50995534a61539e45adfefb45e5e5503"
 
 [[package]]
 name = "idna"
@@ -2943,7 +2964,7 @@ name = "podium"
 version = "0.0.3"
 dependencies = [
  "actix-cors",
- "actix-web 4.0.0-beta.8",
+ "actix-web 4.0.0-beta.9",
  "anyhow",
  "app_dirs",
  "clap",
