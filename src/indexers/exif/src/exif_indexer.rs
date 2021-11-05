@@ -95,7 +95,7 @@ impl Indexer for ExifIndexer {
             })?;
 
             Ok(DocumentSchema {
-                name: String::new(),
+                name: file_to_process.path.file_name().unwrap().to_string_lossy().to_string(),
                 body: format!("{} {} {} {}", res.name, res.admin1, res.admin2, res.admin3),
             })
         })
@@ -124,7 +124,7 @@ mod tests {
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
 
-        assert_eq!(indexed_document.name, "");
+        assert_eq!(indexed_document.name, "IMG_2551.jpeg");
         assert_eq!(indexed_document.body, "Pacureti Prahova Comuna Pacureti RO");
     }
 
