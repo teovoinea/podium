@@ -114,14 +114,14 @@ dependencies = [
 
 [[package]]
 name = "actix-http"
-version = "3.0.0-beta.10"
+version = "3.0.0-beta.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd38a862fa7fead2b47ee55e550982aba583ebc7365ccf0155b49934ad6f16f9"
+checksum = "c9b510d35f13987537289f38bf136e7e702a5c87cc28760310cc459544f40afd"
 dependencies = [
  "actix-codec 0.4.0",
  "actix-rt 2.2.0",
  "actix-service 2.0.0",
- "actix-tls 3.0.0-beta.5",
+ "actix-tls 3.0.0-beta.7",
  "actix-utils 3.0.0",
  "ahash",
  "base64",
@@ -137,6 +137,7 @@ dependencies = [
  "h2 0.3.3",
  "http",
  "httparse",
+ "httpdate",
  "itoa 0.4.7",
  "language-tags 0.3.2",
  "local-channel",
@@ -147,11 +148,8 @@ dependencies = [
  "pin-project 1.0.8",
  "pin-project-lite 0.2.7",
  "rand 0.8.4",
- "regex",
- "serde 1.0.130",
  "sha-1 0.9.7",
  "smallvec",
- "time 0.2.27",
  "tokio 1.13.0",
  "zstd",
 ]
@@ -168,9 +166,9 @@ dependencies = [
 
 [[package]]
 name = "actix-macros"
-version = "0.2.1"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2f86cd6857c135e6e9fe57b1619a88d1f94a7df34c00e11fe13e64fd3438837"
+checksum = "465a6172cf69b960917811022d8f29bc0b7fa1398bc4f78b3c466673db1213b6"
 dependencies = [
  "quote 1.0.9",
  "syn 1.0.74",
@@ -224,7 +222,7 @@ version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc7d7cd957c9ed92288a7c3c96af81fa5291f65247a76a34dac7b6af74e52ba0"
 dependencies = [
- "actix-macros 0.2.1",
+ "actix-macros 0.2.3",
  "futures-core",
  "tokio 1.13.0",
 ]
@@ -330,9 +328,9 @@ dependencies = [
 
 [[package]]
 name = "actix-tls"
-version = "3.0.0-beta.5"
+version = "3.0.0-beta.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65b7bb60840962ef0332f7ea01a57d73a24d2cb663708511ff800250bbfef569"
+checksum = "e4af84e13e4600829858a3e68079be710d1ada461431e1e4c5ae663479ea0a3c"
 dependencies = [
  "actix-codec 0.4.0",
  "actix-rt 2.2.0",
@@ -416,19 +414,19 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
-version = "4.0.0-beta.9"
+version = "4.0.0-beta.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d34aa2b23ec9c7c9a799b3cf9258f67c91b18ac3f0f5f484e175c7ac46739bb5"
+checksum = "e8a4b9d00991d8da308070a5cea7f1bbaa153a91c3fb5567937d99b9f46d601e"
 dependencies = [
  "actix-codec 0.4.0",
- "actix-http 3.0.0-beta.10",
- "actix-macros 0.2.1",
+ "actix-http 3.0.0-beta.11",
+ "actix-macros 0.2.3",
  "actix-router 0.5.0-beta.2",
  "actix-rt 2.2.0",
  "actix-server 2.0.0-beta.5",
  "actix-service 2.0.0",
  "actix-utils 3.0.0",
- "actix-web-codegen 0.5.0-beta.4",
+ "actix-web-codegen 0.5.0-beta.5",
  "ahash",
  "bytes 1.0.1",
  "cfg-if 1.0.0",
@@ -451,7 +449,7 @@ dependencies = [
  "serde_urlencoded",
  "smallvec",
  "socket2 0.4.1",
- "time 0.2.27",
+ "time 0.3.4",
  "url",
 ]
 
@@ -468,9 +466,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web-codegen"
-version = "0.5.0-beta.4"
+version = "0.5.0-beta.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a11fd6f322120a74b23327e778ef0a4950b1f44a2b76468a69316a150f5c6dd"
+checksum = "dfe80a8828fa88a0420dc8fdd4c16b8207326c917f17701881b063eadc2a8d3b"
 dependencies = [
  "actix-router 0.5.0-beta.2",
  "proc-macro2 1.0.28",
@@ -1906,6 +1904,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acd94fdbe1d4ff688b67b04eee2e17bd50995534a61539e45adfefb45e5e5503"
 
 [[package]]
+name = "httpdate"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6456b8a6c8f33fee7d958fcd1b60d55b11940a79e63ae87013e6d22e26034440"
+
+[[package]]
 name = "idna"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2964,7 +2968,7 @@ name = "podium"
 version = "0.0.3"
 dependencies = [
  "actix-cors",
- "actix-web 4.0.0-beta.9",
+ "actix-web 4.0.0-beta.10",
  "anyhow",
  "app_dirs",
  "clap",
@@ -4021,6 +4025,16 @@ dependencies = [
  "time-macros",
  "version_check",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "time"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99beeb0daeac2bd1e86ac2c21caddecb244b39a093594da1a661ec2060c7aedd"
+dependencies = [
+ "itoa 0.4.7",
+ "libc",
 ]
 
 [[package]]
