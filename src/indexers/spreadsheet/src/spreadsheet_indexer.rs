@@ -57,7 +57,7 @@ impl Indexer for SpreadsheetIndexer {
             });
 
             Ok(DocumentSchema {
-                name: String::new(),
+                name: file_to_process.path.file_name().unwrap().to_string_lossy().to_string(),
                 body: strings,
             })
         })
@@ -79,7 +79,7 @@ mod tests {
             .index_file(&new_file_to_process(test_file_path).await)
             .unwrap();
 
-        assert_eq!(indexed_document.name, "");
+        assert_eq!(indexed_document.name, "Cats.xlsx");
         assert_eq!(indexed_document.body, "this sheet is about cats cats have paws they\'re pretty cool Horses are also an animal Horses don\'t have paws Weird isn\'t it? ");
     }
 
