@@ -28,7 +28,7 @@ dependencies = [
  "futures-sink",
  "log",
  "pin-project-lite 0.2.7",
- "tokio 1.14.0",
+ "tokio 1.15.0",
  "tokio-util 0.6.7",
 ]
 
@@ -148,7 +148,7 @@ dependencies = [
  "rand 0.8.4",
  "sha-1 0.9.7",
  "smallvec",
- "tokio 1.14.0",
+ "tokio 1.15.0",
  "zstd",
 ]
 
@@ -222,7 +222,7 @@ checksum = "bc7d7cd957c9ed92288a7c3c96af81fa5291f65247a76a34dac7b6af74e52ba0"
 dependencies = [
  "actix-macros 0.2.3",
  "futures-core",
- "tokio 1.14.0",
+ "tokio 1.15.0",
 ]
 
 [[package]]
@@ -259,7 +259,7 @@ dependencies = [
  "mio 0.7.13",
  "num_cpus",
  "slab",
- "tokio 1.14.0",
+ "tokio 1.15.0",
 ]
 
 [[package]]
@@ -959,7 +959,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "tantivy",
- "tokio 1.14.0",
+ "tokio 1.15.0",
  "tracing",
  "tracing-flame",
  "tracing-futures",
@@ -1829,7 +1829,7 @@ dependencies = [
  "http",
  "indexmap",
  "slab",
- "tokio 1.14.0",
+ "tokio 1.15.0",
  "tokio-util 0.6.7",
  "tracing",
 ]
@@ -2988,7 +2988,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "simple_logger",
- "tokio 1.14.0",
+ "tokio 1.15.0",
  "tracing",
  "tracing-flame",
  "tracing-futures",
@@ -4105,11 +4105,10 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.14.0"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70e992e41e0d2fb9f755b37446f20900f64446ef54874f40a60c78f021ac6144"
+checksum = "fbbf1c778ec206785635ce8ad57fe52b3009ae9e0c9f574a728f3049d3e55838"
 dependencies = [
- "autocfg",
  "bytes 1.0.1",
  "libc",
  "memchr",
@@ -4125,9 +4124,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.6.0"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9efc1aba077437943f7515666aa2b882dfabfbfdf89c819ea75a8d6e9eaba5e"
+checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
 dependencies = [
  "proc-macro2 1.0.28",
  "quote 1.0.9",
@@ -4159,7 +4158,7 @@ dependencies = [
  "futures-sink",
  "log",
  "pin-project-lite 0.2.7",
- "tokio 1.14.0",
+ "tokio 1.15.0",
 ]
 
 [[package]]
