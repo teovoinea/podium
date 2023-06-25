@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate criterion;
 
-
-
 // fn bench_indexing_pdf_file(c: &mut Criterion) {
 //     let rt = Runtime::new().unwrap();
 //     let test_file_path = Path::new("../../../test_files/Cats.pdf");

@@ -50,8 +50,6 @@ impl Searcher {
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
         info!("Executed search");
 
-        
-
         top_docs
             .into_iter()
             .map(|(_score, doc_address)| searcher.doc(doc_address).unwrap())
