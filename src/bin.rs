@@ -10,7 +10,7 @@ use actix_web::{web, App, HttpServer};
 use app_dirs::*;
 use tokio;
 use tracing::info;
-use tracing_subscriber::{fmt, layer::SubscriberExt, prelude::*, registry::Registry};
+use tracing_subscriber::{layer::SubscriberExt, prelude::*};
 
 use tracing_flame::FlameLayer;
 
@@ -24,7 +24,7 @@ async fn async_main() -> io::Result<()> {
 
     setup_global_subscriber(&config);
 
-    let local = tokio::task::LocalSet::new();
+    let _local = tokio::task::LocalSet::new();
 
     // Get or create settings
     let settings = get_or_create_settings(&config);

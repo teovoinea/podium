@@ -85,7 +85,7 @@ pub fn tantivy_init(settings: &TantivyConfig) -> tantivy::Result<(Searcher, Tant
 
     let schema = build_schema();
 
-    let index = Index::open_or_create(MmapDirectory::open(&index_path).unwrap(), schema.clone())?;
+    let index = Index::open_or_create(MmapDirectory::open(index_path).unwrap(), schema.clone())?;
 
     let index_reader = index
         .reader_builder()

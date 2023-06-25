@@ -2,7 +2,7 @@ use blake2b_simd::blake2b;
 use common::tokio::fs;
 use common::tracing::*;
 use common::tracing::{info_span, instrument};
-use common::tracing_futures;
+
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 

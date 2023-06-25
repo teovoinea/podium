@@ -29,16 +29,16 @@ pub async fn start_watcher(directories: &Vec<PathBuf>, tantivy_wrapper: &mut Tan
                 info!("Received watcher event: {:?}", event);
                 match event {
                     DebouncedEvent::Create(path_buf) => {
-                        create_event(path_buf, &tantivy_wrapper).await;
+                        create_event(path_buf, tantivy_wrapper).await;
                     }
                     DebouncedEvent::Write(path_buf) => {
-                        write_event(path_buf, &tantivy_wrapper).await;
+                        write_event(path_buf, tantivy_wrapper).await;
                     }
                     DebouncedEvent::NoticeRemove(path_buf) => {
-                        remove_event(&path_buf, &tantivy_wrapper);
+                        remove_event(&path_buf, tantivy_wrapper);
                     }
                     DebouncedEvent::Rename(src_path_buf, dst_path_buf) => {
-                        rename_event(&src_path_buf, &dst_path_buf, &tantivy_wrapper);
+                        rename_event(&src_path_buf, &dst_path_buf, tantivy_wrapper);
                         // TODO: Figure out if you can just update the facet without reprocessing the whole document?
                     }
                     _ => {

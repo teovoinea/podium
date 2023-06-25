@@ -47,7 +47,7 @@ pub fn get_config() -> AppConfig {
     let scan_directories = matches
         .values_of("scan-directories")
         .unwrap()
-        .map(|path| PathBuf::from(path))
+        .map(PathBuf::from)
         .collect::<Vec<PathBuf>>();
 
     dbg!(matches.occurrences_of("verbose"));
@@ -74,11 +74,11 @@ pub fn get_config() -> AppConfig {
 
 fn path_validator(v: String) -> Result<(), String> {
     let broken_paths: Vec<&str> = v
-        .split(",")
+        .split(',')
         .filter(|path| !Path::new(path).exists())
         .collect();
 
-    if broken_paths.len() > 0 {
+    if !broken_paths.is_empty() {
         return Err(format!(
             "The following paths could not be resolved: {:?}",
             broken_paths

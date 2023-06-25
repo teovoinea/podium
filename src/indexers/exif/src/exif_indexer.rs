@@ -2,7 +2,8 @@ use common::error_adapter::log_and_return_error_string;
 use contracts::file_to_process::FileToProcess;
 use contracts::indexer::{DocumentSchema, Indexer};
 use std::ffi::{OsStr, OsString};
-use std::io::Cursor;
+use std::fs::File;
+use std::io::BufReader;
 
 use common::anyhow::{Context, Error, Result};
 use common::tracing::{span, Level};
@@ -35,9 +36,10 @@ impl Indexer for ExifIndexer {
 
     fn index_file(&self, file_to_process: &FileToProcess) -> Result<DocumentSchema> {
         let path = file_to_process.path.to_str().unwrap();
+        let file = File::open(path)?;
         span!(Level::INFO, "exif_indexer: indexing image file", path).in_scope(|| {
             let reader = span!(Level::INFO, "exif_indexer: Loading exif data from image from memory").in_scope(|| {
-                exif::Reader::new(&mut Cursor::new(&file_to_process.contents)).with_context(|| {
+                exif::Reader::new().read_from_container(&mut BufReader::new(&file)).with_context(|| {
                     log_and_return_error_string(format!(
                         "exif_indexer: Failed to initialize exif reader for file at path: {:?}",
                         file_to_process.path
@@ -60,7 +62,7 @@ impl Indexer for ExifIndexer {
                         }
                         Tag::GPSLatitude => {
                             if let Value::Rational(val) = &f.value {
-                                lat = value_to_deg(val);
+                                lat = value_to_deg(&val);
                             }
                         }
                         Tag::GPSLongitudeRef => {
@@ -70,7 +72,7 @@ impl Indexer for ExifIndexer {
                         }
                         Tag::GPSLongitude => {
                             if let Value::Rational(val) = &f.value {
-                                lon = value_to_deg(val);
+                                lon = value_to_deg(&val);
                             }
                         }
                         _ => {}
