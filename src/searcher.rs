@@ -50,7 +50,9 @@ impl Searcher {
         let top_docs = searcher.search(&query, &TopDocs::with_limit(10)).unwrap();
         info!("Executed search");
 
-        let result = top_docs
+        
+
+        top_docs
             .into_iter()
             .map(|(_score, doc_address)| searcher.doc(doc_address).unwrap())
             .map(|retrieved_doc| {
@@ -58,7 +60,7 @@ impl Searcher {
                     String::new(),
                     |mut acc, x| {
                         acc.push_str(x.unwrap());
-                        acc.push_str(" ");
+                        acc.push(' ');
                         acc
                     },
                 );
@@ -73,7 +75,7 @@ impl Searcher {
                     String::new(),
                     |mut acc, x| {
                         acc.push_str(x.unwrap());
-                        acc.push_str(" ");
+                        acc.push(' ');
                         acc
                     },
                 );
@@ -83,8 +85,6 @@ impl Searcher {
                     body,
                 }
             })
-            .collect();
-
-        result
+            .collect()
     }
 }
