@@ -8,7 +8,7 @@ edition = "2018"
 contracts = { path = "../../contracts" }
 common = { path = "../../common" }
 lazy_static = "1"
-kamadak-exif = "0.3"
+kamadak-exif = "0.5"
 reverse_geocoder = "2"
 
 [dev-dependencies]
