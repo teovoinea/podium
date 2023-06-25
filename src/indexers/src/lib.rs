@@ -22,7 +22,7 @@ use std::iter::FromIterator;
 
 use common::tokio;
 use common::tracing::instrument;
-use common::tracing_futures;
+
 use once_cell::sync::Lazy;
 
 use contracts::file_to_process::FileToProcess;
